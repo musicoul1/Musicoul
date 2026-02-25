@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Musicoul • Premium Music Institute</title>
+    <meta
+      name="description"
+      content="Musicoul is a premium music institute for singing, harmonium, tabla, piano, pakhwaj, and more."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a href="#home" class="brand" aria-label="Musicoul home">
+          <img
+            src="logo.png"
+            alt="Musicoul logo"
+            class="brand-logo"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';"
+          />
+          <span class="brand-fallback" aria-hidden="true">M</span>
+          <span class="brand-text">MUSICOUL</span>
+        </a>
+        <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+        <nav class="desktop-nav" aria-label="Primary">
+          <a href="#programs">Programs</a>
+          <a href="#why">Why Us</a>
+          <a href="#contact">Contact</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero" id="home">
+          <p class="eyebrow">Premium • Minimal • Performance-Focused</p>
+          <h1>Learn Music the Musicoul Way.</h1>
+          <p class="hero-copy">
+            Build confidence in <strong>singing</strong> and master instruments like
+            <strong>harmonium</strong>, <strong>tabla</strong>, <strong>piano</strong>,
+            <strong>pakhwaj</strong>, and much more with expert-led guidance.
+          </p>
+          <div class="hero-actions">
+            <a href="#contact" class="btn btn-primary">Book a Trial Class</a>
+            <a href="#programs" class="btn btn-ghost">Explore Programs</a>
+          </div>
+          <div class="hero-glow" aria-hidden="true"></div>
+        </section>
+
+        <section class="section" id="programs">
+          <div class="section-head">
+            <h2>What We Teach</h2>
+            <p>Structured curriculum from fundamentals to stage-ready excellence.</p>
+          </div>
+
+          <div class="card-grid">
+            <article class="card reveal">
+              <h3>Singing</h3>
+              <p>Classical and contemporary vocal training with breath, pitch, and expression.</p>
+            </article>
+            <article class="card reveal">
+              <h3>Harmonium</h3>
+              <p>Finger strength, scales, and accompaniment techniques for soulful performance.</p>
+            </article>
+            <article class="card reveal">
+              <h3>Tabla</h3>
+              <p>Rhythm cycles, speed control, and clarity through practical compositions.</p>
+            </article>
+            <article class="card reveal">
+              <h3>Piano</h3>
+              <p>From notation basics to dynamic pieces with expression and confidence.</p>
+            </article>
+            <article class="card reveal">
+              <h3>Pakhwaj</h3>
+              <p>Traditional bols, posture discipline, and tonal precision in guided practice.</p>
+            </article>
+            <article class="card reveal">
+              <h3>And More</h3>
+              <p>Customized training paths for learners across levels and musical interests.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section why" id="why">
+          <div class="section-head">
+            <h2>Why Musicoul</h2>
+          </div>
+          <ul class="benefits reveal">
+            <li><span>01</span> Expert mentors with practical stage and teaching experience.</li>
+            <li><span>02</span> Premium, distraction-free learning environment.</li>
+            <li><span>03</span> Individual attention with regular progress checkpoints.</li>
+            <li><span>04</span> Performance and recording-ready training style.</li>
+          </ul>
+        </section>
+
+        <section class="section contact" id="contact">
+          <div class="section-head">
+            <h2>Start Your Musical Journey</h2>
+            <p>Share your details and we’ll schedule your trial class.</p>
+          </div>
+          <form class="contact-form reveal" id="contactForm">
+            <label>
+              Full Name
+              <input type="text" name="name" placeholder="Your name" required />
+            </label>
+            <label>
+              Phone Number
+              <input type="tel" name="phone" placeholder="Your phone" required />
+            </label>
+            <label>
+              Interested In
+              <select name="interest" required>
+                <option value="">Select a program</option>
+                <option>Singing</option>
+                <option>Harmonium</option>
+                <option>Tabla</option>
+                <option>Piano</option>
+                <option>Pakhwaj</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <button type="submit" class="btn btn-primary">Submit Enquiry</button>
+            <p class="form-note" id="formNote" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+      </main>
+
+      <nav class="mobile-dock" id="mobileDock" aria-label="Quick Navigation">
+        <a href="#home" class="active">Home</a>
+        <a href="#programs">Programs</a>
+        <a href="#why">Why Us</a>
+        <a href="#contact">Contact</a>
+      </nav>
+
+      <div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+        <a href="#programs">Programs</a>
+        <a href="#why">Why Us</a>
+        <a href="#contact">Contact</a>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
