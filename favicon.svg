@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Musicoul logo">
+  <rect width="512" height="512" fill="#060607"/>
+  <circle cx="256" cy="256" r="220" fill="none" stroke="#b4162e" stroke-width="12"/>
+  <circle cx="256" cy="256" r="170" fill="none" stroke="#b4162e" stroke-width="9"/>
+  <circle cx="160" cy="146" r="8" fill="#b4162e"/>
+  <circle cx="352" cy="146" r="8" fill="#b4162e"/>
+  <circle cx="160" cy="366" r="8" fill="#b4162e"/>
+  <circle cx="352" cy="366" r="8" fill="#b4162e"/>
+  <ellipse cx="256" cy="252" rx="60" ry="84" fill="#b4162e"/>
+  <rect x="198" y="236" width="26" height="12" rx="4" fill="#060607"/>
+  <rect x="198" y="264" width="26" height="12" rx="4" fill="#060607"/>
+  <rect x="288" y="236" width="26" height="12" rx="4" fill="#060607"/>
+  <rect x="288" y="264" width="26" height="12" rx="4" fill="#060607"/>
+  <path d="M212 308c10 22 28 38 44 38s34-16 44-38" fill="none" stroke="#060607" stroke-width="8" stroke-linecap="round"/>
+  <path d="M256 338v28" stroke="#b4162e" stroke-width="10" stroke-linecap="round"/>
+  <path d="M220 367h72" stroke="#b4162e" stroke-width="10" stroke-linecap="round"/>
+  <defs>
+    <path id="topArc" d="M116 256a140 140 0 1 1 280 0a140 140 0 1 1-280 0"/>
+  </defs>
+  <text fill="#fff" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700" letter-spacing="6">
+    <textPath href="#topArc" startOffset="8%">MUSICOUL • MUSICOUL •</textPath>
+  </text>
+</svg>

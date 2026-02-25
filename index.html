@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Musicoul • Premium Music Institute</title>
+    <meta
+      name="description"
+      content="Musicoul - premium music training for singing and instruments like harmonium, tabla, piano, pakhwaj and more."
+    />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#home" aria-label="Musicoul">
+          <img src="logo.svg" alt="Musicoul logo" class="logo" />
+          <div>
+            <p class="brand-name">MUSICOUL</p>
+            <p class="brand-sub">Premium Music Institute</p>
+          </div>
+        </a>
+        <nav class="desktop-nav" aria-label="Primary">
+          <a href="#home">Home</a>
+          <a href="#courses">Courses</a>
+          <a href="#contact">Contact</a>
+        </nav>
+        <button id="menuToggle" class="menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+          <span></span><span></span>
+        </button>
+      </header>
+
+      <nav class="mobile-menu" id="mobileMenu" aria-hidden="true">
+        <a href="#home">Home</a>
+        <a href="#courses">Courses</a>
+        <a href="#contact">Contact</a>
+      </nav>
+
+      <main>
+        <section class="hero section" id="home">
+          <div class="hero-content reveal">
+            <p class="eyebrow">Premium • Minimal • Performance-Ready</p>
+            <h1>Learn music with elegance, clarity, and confidence.</h1>
+            <p>
+              Singing, harmonium, tabla, piano, pakhwaj and more — designed in structured,
+              high-focus sessions.
+            </p>
+            <div class="hero-actions">
+              <a href="#contact" class="btn btn-primary">Book Trial</a>
+              <a href="#courses" class="btn btn-ghost">Explore Courses</a>
+            </div>
+          </div>
+          <div class="hero-visual reveal delay-1" aria-hidden="true">
+            <img src="logo.svg" alt="" />
+            <span></span>
+          </div>
+        </section>
+
+        <section class="section" id="courses">
+          <div class="section-head reveal">
+            <p class="eyebrow">Top Programs</p>
+            <h2>Popular Courses</h2>
+          </div>
+
+          <div class="course-grid">
+            <article class="course-card reveal">
+              <img src="assets/singing.svg" alt="Singing class" loading="lazy" />
+              <div>
+                <h3>Singing</h3>
+                <p>Voice culture, pitch and expression.</p>
+              </div>
+            </article>
+            <article class="course-card reveal delay-1">
+              <img src="assets/tabla.svg" alt="Tabla class" loading="lazy" />
+              <div>
+                <h3>Tabla</h3>
+                <p>Rhythm mastery with guided practice.</p>
+              </div>
+            </article>
+            <article class="course-card reveal delay-2">
+              <img src="assets/piano.svg" alt="Piano class" loading="lazy" />
+              <div>
+                <h3>Piano</h3>
+                <p>Technique, notation, and musicality.</p>
+              </div>
+            </article>
+
+            <article class="course-card extra-course">
+              <img src="assets/harmonium.svg" alt="Harmonium class" loading="lazy" />
+              <div>
+                <h3>Harmonium</h3>
+                <p>Melody, accompaniment and control.</p>
+              </div>
+            </article>
+            <article class="course-card extra-course">
+              <img src="assets/pakhwaj.svg" alt="Pakhwaj class" loading="lazy" />
+              <div>
+                <h3>Pakhwaj</h3>
+                <p>Traditional bols and tonal discipline.</p>
+              </div>
+            </article>
+            <article class="course-card extra-course">
+              <img src="assets/more.svg" alt="Other music courses" loading="lazy" />
+              <div>
+                <h3>More Courses</h3>
+                <p>Customized pathways for every learner.</p>
+              </div>
+            </article>
+          </div>
+
+          <button id="viewAllBtn" class="btn btn-ghost view-all-btn" type="button">View All Courses</button>
+        </section>
+
+        <section class="section compact reveal" id="contact">
+          <div class="section-head">
+            <p class="eyebrow">Admissions</p>
+            <h2>Start Your Journey</h2>
+          </div>
+          <form class="contact-form" id="contactForm">
+            <input type="text" name="name" placeholder="Your Name" required />
+            <input type="tel" name="phone" placeholder="Phone Number" required />
+            <select name="interest" required>
+              <option value="">Interested In</option>
+              <option>Singing</option>
+              <option>Harmonium</option>
+              <option>Tabla</option>
+              <option>Piano</option>
+              <option>Pakhwaj</option>
+              <option>Other</option>
+            </select>
+            <button class="btn btn-primary" type="submit">Submit Enquiry</button>
+            <p id="formNote" class="form-note" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+      </main>
+
+      <nav class="mobile-dock" aria-label="Bottom navigation">
+        <a href="#home" class="active">Home</a>
+        <a href="#courses">Courses</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
