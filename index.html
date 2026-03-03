@@ -1014,7 +1014,7 @@
             {course.coverImage && (
               <div className="absolute inset-0 z-0">
                 <img src={course.coverImage} alt="Cover" className="w-full h-full object-cover opacity-20 mix-blend-overlay" />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/80 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/90 to-transparent"></div>
               </div>
             )}
             <div className="relative z-10">
@@ -1066,20 +1066,27 @@
                         onClick={() => r.isFolder ? setCurrentFolderId(r.id) : onViewResource(r)}
                         className="glass p-5 rounded-2xl flex items-center justify-between group text-left hover-lift border border-white/5 hover:border-[#D4AF37]/30"
                       >
-                        <div className="flex items-center gap-5 relative z-10 overflow-hidden pr-2">
+                        {(r.type === 'video' || r.type === 'youtube') && r.thumbnailUrl && (
+                          <div className="absolute inset-0 opacity-[0.15] group-hover:opacity-[0.3] transition-opacity z-0 pointer-events-none">
+                            <img src={r.thumbnailUrl} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent"></div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-4 relative z-10 overflow-hidden pr-2">
                           <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border border-white/10 transition-colors shadow-inner ${r.isFolder ? 'bg-gradient-to-br from-[#D4AF37]/20 to-black text-[#D4AF37]' : 'bg-gradient-to-br from-gray-800 to-black text-gray-400 group-hover:text-white'}`}>
                             {r.isFolder ? <Folder size={20} className="fill-[#D4AF37]/20"/> : 
                              r.type === 'video' ? <PlayCircle size={20}/> : 
-                             r.type === 'youtube' ? <PlayCircle size={20}/> : 
+                             r.type === 'youtube' ? <PlayCircle size={20} className="text-red-400"/> : 
                              r.type === 'image' || r.type === 'collage' ? <ImageIcon size={20}/> : 
                              r.type === 'link' ? <LinkIcon size={20}/> : <FileText size={20}/>}
                           </div>
                           <div className="truncate">
-                            <h4 className="text-white text-sm font-medium tracking-wide mb-1 truncate">{r.title}</h4>
-                            <p className="text-[#D4AF37] text-[8px] uppercase tracking-widest font-bold opacity-80">{r.isFolder ? 'Folder' : `${r.type}`}</p>
+                            <h4 className="text-white text-xs md:text-sm font-bold tracking-wider uppercase mb-1 truncate">{r.title}</h4>
+                            <p className="text-gray-500 text-[8px] md:text-[9px] uppercase tracking-[0.2em] font-bold">{r.isFolder ? 'Folder' : `${r.type}`}</p>
                           </div>
                         </div>
-                        <ChevronRight size={16} className={`${r.isFolder ? 'text-[#D4AF37]' : 'text-gray-600 group-hover:text-white'} transition-colors shrink-0`} />
+                        <ChevronRight size={16} className={`${r.isFolder ? 'text-[#D4AF37]' : 'text-gray-600 group-hover:text-white'} transition-colors shrink-0 relative z-10`} />
                       </button>
                     ))}
                   </div>
@@ -1106,7 +1113,7 @@
             )}
 
             {activeTab === 'ledger' && (
-              <div className="max-w-3xl glass-premium p-8 md:p-12 rounded-[2rem] border border-[#D4AF37]/20 shadow-2xl animate-in fade-in">
+              <div className="max-w-2xl glass-premium p-8 md:p-12 rounded-[2rem] border border-[#D4AF37]/20 shadow-2xl animate-in fade-in">
                 <div className="flex items-center gap-6 md:gap-8 mb-10 pb-10 border-b border-white/5">
                   <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-[3px] border-[#111] border-t-[#D4AF37] border-r-[#D4AF37] flex items-center justify-center shrink-0 shadow-[0_0_30px_rgba(212,175,55,0.15)] bg-black/50">
                     <span className="text-3xl md:text-4xl serif text-white">{rate}%</span>
@@ -1621,7 +1628,7 @@
                      <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
                        {enrolledStudents.map(student => (
                          <div key={student.id} className="flex items-center gap-4 p-4 rounded-2xl glass border border-white/5">
-                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center text-white serif font-medium shrink-0 overflow-hidden shadow-inner">
+                            <div className="w-10 h-10 md:w-12 h-12 rounded-full bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center text-white serif font-medium shrink-0 overflow-hidden shadow-inner">
                               {student.profilePic ? <img src={student.profilePic} className="w-full h-full object-cover" /> : student.name.charAt(0)}
                             </div>
                             <div className="truncate">
@@ -1950,7 +1957,7 @@
                 {breadcrumbs.map((f, i) => (
                   <React.Fragment key={f.id}>
                     <ChevronRight size={12} className="text-[#D4AF37]/50 shrink-0" />
-                    <button onClick={() => setCurrentFolderId(f.id)} className={`hover:text-white transition-colors truncate max-w-[100px] shrink-0 ${i === breadcrumbs.length-1 ? 'text-[#D4AF37]' : ''}`}>
+                    <button onClick={() => setCurrentFolderId(f.id)} className={`hover:text-white transition-colors truncate max-w-[100px] md:max-w-[200px] shrink-0 ${i === breadcrumbs.length-1 ? 'text-[#D4AF37]' : ''}`}>
                       {f.title}
                     </button>
                   </React.Fragment>
