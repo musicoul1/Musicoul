@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="shortcut icon" href="Assets/Images/Logo.png" type="image/x-icon">
   <title>Musicoul</title>
 
   <!-- Tailwind CSS via CDN -->
@@ -688,7 +687,7 @@
 
           {/* MAIN CONTENT AREA */}
           <main className="flex-1 h-[calc(100vh-65px)] lg:h-screen overflow-y-auto relative">
-            <div className="p-4 sm:p-6 md:p-10 lg:p-14 max-w-7xl mx-auto min-h-full">
+            <div className={`p-4 sm:p-6 md:p-10 lg:p-14 max-w-7xl mx-auto min-h-full ${role === 'student' ? 'pb-32 sm:pb-32 md:pb-10 lg:pb-14' : 'pb-10 lg:pb-14'}`}>
               {(role === 'student' || role === 'admin') && activeTab === 'dashboard' && <StudentDashboard user={user} userData={userData} courses={allCourses} />}
               {role === 'teacher' && activeTab === 'dashboard' && <TeacherDashboard user={user} userData={userData} courses={allCourses} users={allUsers} showConfirm={showConfirm} />}
               {role === 'teacher' && activeTab === 'attendance' && <TeacherAttendance user={user} userData={userData} courses={allCourses} users={allUsers} isAdmin={false} showConfirm={showConfirm} />}
@@ -1014,12 +1013,12 @@
       const breadcrumbs = buildBreadcrumbs(currentFolderId, allResources);
 
       return (
-        <div className="animate-in fade-in duration-500 flex flex-col h-full">
+        <div className="animate-in fade-in duration-500">
           <button onClick={onBack} className="text-[#D4AF37] text-[10px] font-bold uppercase tracking-[0.2em] mb-8 hover:text-white transition-colors flex items-center gap-2 w-fit">
             <ChevronLeft size={14} /> Back to My Courses
           </button>
 
-          <header className="mb-10 relative rounded-[2.5rem] overflow-hidden glass-premium p-8 md:p-12 shrink-0 border border-[#D4AF37]/20 shadow-2xl">
+          <header className="mb-10 relative rounded-[2.5rem] overflow-hidden glass-premium p-8 md:p-12 border border-[#D4AF37]/20 shadow-2xl">
             {course.coverImage && (
               <div className="absolute inset-0 z-0">
                 <img src={course.coverImage} alt="Cover" className="w-full h-full object-cover opacity-20 mix-blend-overlay" />
@@ -1032,7 +1031,7 @@
             </div>
           </header>
 
-          <div className="flex items-center gap-8 md:gap-12 border-b border-white/5 mb-8 shrink-0">
+          <div className="flex items-center gap-8 md:gap-12 border-b border-white/5 mb-8">
              {['materials', 'schedule', 'ledger'].map(tab => (
                <button 
                  key={tab} 
@@ -1044,7 +1043,7 @@
              ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto pb-20 md:pb-12 custom-scrollbar pr-2">
+          <div>
             {activeTab === 'materials' && (
               <div className="space-y-6 md:space-y-8">
                 {/* Breadcrumbs */}
