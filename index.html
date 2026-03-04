@@ -792,19 +792,18 @@
       const activeCourse = courses.find(c => c.id === activeCourseId);
       const myCourses = courses.filter(c => userData.enrolledCourses?.includes(c.id));
 
+      if (previewResource && activeCourse) {
+         return <ResourcePreviewer resource={previewResource} course={activeCourse} userData={userData} onClose={() => setPreviewResource(null)} />;
+      }
+
       if (activeCourse) {
         return (
-          <React.Fragment>
             <CourseViewer 
               course={activeCourse} 
               userData={userData}
               onBack={() => setActiveCourseId(null)} 
               onViewResource={setPreviewResource}
             />
-            {previewResource && (
-              <ResourcePreviewer resource={previewResource} course={activeCourse} userData={userData} onClose={() => setPreviewResource(null)} />
-            )}
-          </React.Fragment>
         );
       }
 
@@ -1155,6 +1154,10 @@
       const currentResources = allResources.filter(r => (r.parentId || null) === currentFolderId);
       const breadcrumbs = buildBreadcrumbs(currentFolderId, allResources);
 
+      if (previewResource) {
+         return <ResourcePreviewer resource={previewResource} course={course} userData={userData} onClose={() => setPreviewResource(null)} showConfirm={showConfirm} />;
+      }
+
       return (
         <div className="animate-in fade-in slide-in-from-right-8 duration-500">
           <SmartBackButton onClick={() => { onBack(); setCurrentFolderId(null); }} label="Back to Courses" />
@@ -1276,7 +1279,6 @@
           {showFolderModal && <CreateFolderModal courseId={course.id} parentId={currentFolderId} courseResources={course.resources} onClose={() => setShowFolderModal(false)} />}
           {showScheduleModal && <ScheduleCreatorModal courseId={course.id} onClose={() => setShowScheduleModal(false)} />}
           {showEditCourseModal && <EditCourseModal course={course} onClose={() => setShowEditCourseModal(false)} />}
-          {previewResource && <ResourcePreviewer resource={previewResource} course={course} userData={userData} onClose={() => setPreviewResource(null)} showConfirm={showConfirm} />}
         </div>
       );
     }
@@ -1443,20 +1445,18 @@
       const [viewingAttachment, setViewingAttachment] = useState(null);
 
       if (isLessonView) {
+        if (viewingAttachment) {
+           return <StandardPreviewLayout resource={viewingAttachment} onClose={() => setViewingAttachment(null)} />;
+        }
         return (
-          <>
-            <LessonPlayerLayout 
-              resource={resource} 
-              course={course} 
-              userData={userData} 
-              onClose={onClose} 
-              showConfirm={showConfirm}
-              onOpenAttachment={setViewingAttachment}
-            />
-            {viewingAttachment && (
-              <StandardPreviewLayout resource={viewingAttachment} onClose={() => setViewingAttachment(null)} />
-            )}
-          </>
+          <LessonPlayerLayout 
+            resource={resource} 
+            course={course} 
+            userData={userData} 
+            onClose={onClose} 
+            showConfirm={showConfirm}
+            onOpenAttachment={setViewingAttachment}
+          />
         )
       }
 
@@ -1481,160 +1481,161 @@
       };
 
       return (
-        <div className="fixed inset-0 z-[9990] bg-[#050505] flex flex-col lg:flex-row animate-in fade-in">
-          {/* Top/Left: Video Player Area */}
-          <div className="w-full lg:w-[65%] xl:w-[70%] bg-black relative flex flex-col shrink-0 aspect-video lg:aspect-auto lg:h-full border-b lg:border-b-0 lg:border-r border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.8)] z-10">
-            <button onClick={onClose} className="absolute top-4 left-4 z-50 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-white text-xs md:text-sm font-bold tracking-widest uppercase hover:bg-[#D4AF37] hover:text-black transition-all flex items-center gap-2 border border-white/10">
-              <ChevronLeft size={16} /> Exit Lesson
-            </button>
-            
-            {resource.type === 'youtube' ? (
-              <iframe 
-                className="w-full h-full flex-1" 
-                src={getYoutubeEmbedUrl(resource.url)} 
-                title={resource.title}
-                frameBorder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                referrerPolicy="strict-origin-when-cross-origin"
-                allowFullScreen
-              ></iframe>
-            ) : (
-              <video className="w-full h-full object-contain outline-none bg-black flex-1" controls controlsList="nodownload" poster={resource.thumbnailUrl || ''} playsInline>
-                <source src={resource.url} />
-              </video>
-            )}
-          </div>
+        <div className="flex flex-col h-full w-full animate-in fade-in pb-8">
+          <SmartBackButton onClick={onClose} label="Back to Course Overview" />
 
-          {/* Bottom/Right: Lesson Notes & Attachments Sidebar */}
-          <div className="w-full lg:w-[35%] xl:w-[30%] bg-[#0A0A0A] flex flex-col h-full overflow-hidden shrink-0">
-             
-             {/* Tabs Header */}
-             <div className="flex border-b border-white/10 bg-black/50 shrink-0">
-               <button onClick={() => setActiveTab('overview')} className={`flex-1 py-5 text-xs md:text-sm font-bold uppercase tracking-widest transition-all border-b-[3px] ${activeTab === 'overview' ? 'text-[#D4AF37] border-[#D4AF37] bg-white/5' : 'text-gray-500 border-transparent hover:text-gray-300 hover:bg-white/5'}`}>
-                 Lesson Info
-               </button>
-               <button onClick={() => setActiveTab('attachments')} className={`flex-1 py-5 text-xs md:text-sm font-bold uppercase tracking-widest transition-all border-b-[3px] flex items-center justify-center gap-2 ${activeTab === 'attachments' ? 'text-[#D4AF37] border-[#D4AF37] bg-white/5' : 'text-gray-500 border-transparent hover:text-gray-300 hover:bg-white/5'}`}>
-                 <Paperclip size={16}/> Materials ({attachments.length})
-               </button>
-             </div>
+          <div className="flex flex-col lg:flex-row flex-1 overflow-hidden glass-premium rounded-2xl md:rounded-[2rem] border border-[#D4AF37]/20 shadow-2xl min-h-[500px]">
+            {/* Top/Left: Video Player Area */}
+            <div className="w-full lg:w-[65%] xl:w-[70%] bg-black relative flex flex-col shrink-0 lg:h-full border-b lg:border-b-0 lg:border-r border-white/10 z-10 min-h-[300px]">
+              {resource.type === 'youtube' ? (
+                <iframe 
+                  className="w-full h-full flex-1" 
+                  src={getYoutubeEmbedUrl(resource.url)} 
+                  title={resource.title}
+                  frameBorder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <video className="w-full h-full object-contain outline-none bg-black flex-1" controls controlsList="nodownload" poster={resource.thumbnailUrl || ''} playsInline>
+                  <source src={resource.url} />
+                </video>
+              )}
+            </div>
 
-             {/* Tab Content */}
-             <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
-                {activeTab === 'overview' && (
-                  <div className="animate-in fade-in">
-                    <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2"><PlayCircle size={16}/> {resource.type}</p>
-                    <h2 className="serif text-3xl md:text-4xl text-white mb-6 leading-tight">{resource.title}</h2>
-                    <div className="prose prose-invert max-w-none">
-                       {resource.description ? (
-                         <p className="text-gray-300 whitespace-pre-wrap leading-relaxed font-light text-sm md:text-base">
-                           {resource.description}
-                         </p>
+            {/* Bottom/Right: Lesson Notes & Attachments Sidebar */}
+            <div className="w-full lg:w-[35%] xl:w-[30%] bg-[#0A0A0A] flex flex-col h-full overflow-hidden shrink-0 min-h-[400px]">
+               
+               {/* Tabs Header */}
+               <div className="flex border-b border-white/10 bg-black/50 shrink-0">
+                 <button onClick={() => setActiveTab('overview')} className={`flex-1 py-5 text-xs md:text-sm font-bold uppercase tracking-widest transition-all border-b-[3px] ${activeTab === 'overview' ? 'text-[#D4AF37] border-[#D4AF37] bg-white/5' : 'text-gray-500 border-transparent hover:text-gray-300 hover:bg-white/5'}`}>
+                   Lesson Info
+                 </button>
+                 <button onClick={() => setActiveTab('attachments')} className={`flex-1 py-5 text-xs md:text-sm font-bold uppercase tracking-widest transition-all border-b-[3px] flex items-center justify-center gap-2 ${activeTab === 'attachments' ? 'text-[#D4AF37] border-[#D4AF37] bg-white/5' : 'text-gray-500 border-transparent hover:text-gray-300 hover:bg-white/5'}`}>
+                   <Paperclip size={16}/> Notes & Links ({attachments.length})
+                 </button>
+               </div>
+
+               {/* Tab Content */}
+               <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar relative">
+                  {activeTab === 'overview' && (
+                    <div className="animate-in fade-in">
+                      <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2"><PlayCircle size={16}/> {resource.type}</p>
+                      <h2 className="serif text-3xl md:text-4xl text-white mb-6 leading-tight">{resource.title}</h2>
+                      <div className="prose prose-invert max-w-none">
+                         {resource.description ? (
+                           <p className="text-gray-300 whitespace-pre-wrap leading-relaxed font-light text-sm md:text-base">
+                             {resource.description}
+                           </p>
+                         ) : (
+                           <p className="text-gray-600 font-light italic">No description provided for this lesson.</p>
+                         )}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'attachments' && (
+                    <div className="animate-in fade-in space-y-4 pb-20">
+                       {isTeacher && (
+                         <button onClick={() => setShowCreator(true)} className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B38D22] text-black py-4 rounded-xl text-xs md:text-sm font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] transition-all mb-6">
+                           <Plus size={18} /> Add Note / Link / File
+                         </button>
+                       )}
+                       
+                       {attachments.length === 0 ? (
+                         <div className="text-center py-10 border border-dashed border-white/10 rounded-2xl">
+                           <Paperclip size={32} className="mx-auto text-gray-600 mb-4" />
+                           <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">No additional material linked.</p>
+                         </div>
                        ) : (
-                         <p className="text-gray-600 font-light italic">No notes provided for this lesson.</p>
+                         attachments.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt)).map(att => (
+                           <div key={att.id} onClick={() => {
+                               if(att.type === 'link') window.open(att.url, '_blank');
+                               else onOpenAttachment(att);
+                           }} className="glass p-4 rounded-xl flex items-center justify-between group cursor-pointer hover-lift border border-white/5 hover:border-[#D4AF37]/30 transition-all">
+                              <div className="flex items-center gap-4 overflow-hidden">
+                                <div className="w-10 h-10 rounded-lg bg-black/50 border border-white/10 flex items-center justify-center text-gray-400 group-hover:text-white group-hover:bg-[#D4AF37]/10 transition-colors shrink-0">
+                                  {att.type === 'pdf' ? <FileText size={18}/> : 
+                                   att.type === 'image' || att.type === 'collage' ? <ImageIcon size={18}/> :
+                                   att.type === 'text' ? <FileText size={18}/> :
+                                   att.type === 'link' ? <LinkIcon size={18}/> : <Paperclip size={18}/>}
+                                </div>
+                                <div className="truncate">
+                                  <h4 className="text-white text-sm font-medium truncate mb-1 group-hover:text-[#D4AF37] transition-colors">{att.title}</h4>
+                                  <span className="text-gray-500 text-[10px] md:text-xs uppercase tracking-widest font-bold">
+                                    {att.type === 'link' ? 'External Link' : att.type === 'text' ? 'Note' : att.type}
+                                  </span>
+                                </div>
+                              </div>
+                              {isTeacher ? (
+                                 <button onClick={(e) => deleteAttachment(att.id, e)} className="text-gray-600 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors shrink-0">
+                                   <Trash2 size={16} />
+                                 </button>
+                              ) : (
+                                 <ChevronRight size={18} className="text-gray-600 group-hover:text-white transition-colors shrink-0" />
+                              )}
+                           </div>
+                         ))
                        )}
                     </div>
-                  </div>
-                )}
+                  )}
+               </div>
+            </div>
 
-                {activeTab === 'attachments' && (
-                  <div className="animate-in fade-in space-y-4 pb-20">
-                     {isTeacher && (
-                       <button onClick={() => setShowCreator(true)} className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B38D22] text-black py-4 rounded-xl text-xs md:text-sm font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] transition-all mb-6">
-                         <Plus size={18} /> Add Attachment
-                       </button>
-                     )}
-                     
-                     {attachments.length === 0 ? (
-                       <div className="text-center py-10 border border-dashed border-white/10 rounded-2xl">
-                         <Paperclip size={32} className="mx-auto text-gray-600 mb-4" />
-                         <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">No attachments linked.</p>
-                       </div>
-                     ) : (
-                       attachments.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt)).map(att => (
-                         <div key={att.id} onClick={() => onOpenAttachment(att)} className="glass p-4 rounded-xl flex items-center justify-between group cursor-pointer hover-lift border border-white/5 hover:border-[#D4AF37]/30 transition-all">
-                            <div className="flex items-center gap-4 overflow-hidden">
-                              <div className="w-10 h-10 rounded-lg bg-black/50 border border-white/10 flex items-center justify-center text-gray-400 group-hover:text-white group-hover:bg-[#D4AF37]/10 transition-colors shrink-0">
-                                {att.type === 'pdf' ? <FileText size={18}/> : 
-                                 att.type === 'image' || att.type === 'collage' ? <ImageIcon size={18}/> :
-                                 att.type === 'link' ? <LinkIcon size={18}/> : <Paperclip size={18}/>}
-                              </div>
-                              <div className="truncate">
-                                <h4 className="text-white text-sm font-medium truncate mb-1 group-hover:text-[#D4AF37] transition-colors">{att.title}</h4>
-                                <span className="text-gray-500 text-[10px] md:text-xs uppercase tracking-widest font-bold">{att.type}</span>
-                              </div>
-                            </div>
-                            {isTeacher ? (
-                               <button onClick={(e) => deleteAttachment(att.id, e)} className="text-gray-600 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors shrink-0">
-                                 <Trash2 size={16} />
-                               </button>
-                            ) : (
-                               <ChevronRight size={18} className="text-gray-600 group-hover:text-white transition-colors shrink-0" />
-                            )}
-                         </div>
-                       ))
-                     )}
-                  </div>
-                )}
-             </div>
+            {showCreator && <ResourceCreatorModal courseId={course.id} parentId={resource.id} onClose={() => setShowCreator(false)} defaultType="text" />}
           </div>
-
-          {showCreator && <ResourceCreatorModal courseId={course.id} parentId={resource.id} onClose={() => setShowCreator(false)} />}
         </div>
       );
     }
 
     function StandardPreviewLayout({ resource, onClose }) {
       return (
-        <div className="fixed inset-0 z-[9995] flex flex-col items-center justify-center p-4 md:p-6 bg-[#050505]/95 backdrop-blur-xl animate-in fade-in pt-16 md:pt-20">
-          <button onClick={onClose} className="absolute top-4 right-4 md:top-8 md:right-8 text-[#D4AF37] hover:text-white transition-colors uppercase text-xs md:text-sm tracking-widest font-bold flex items-center gap-2 z-50 bg-black/50 md:bg-transparent px-3 py-2 md:p-0 rounded-lg md:rounded-none">
-            <span className="hidden sm:inline">Close</span> <X size={28} />
-          </button>
+        <div className="flex flex-col h-full w-full animate-in fade-in pb-8">
+          <SmartBackButton onClick={onClose} label="Back" />
           
-          <div className="w-full max-w-6xl h-[85vh] flex flex-col relative">
-            
-            <div className="mb-4 md:mb-6 text-center px-4 relative z-10 shrink-0">
-              <p className="text-[#D4AF37] text-xs uppercase tracking-widest font-bold mb-2">{resource.type}</p>
-              <h2 className="serif text-3xl md:text-5xl text-white truncate max-w-4xl mx-auto">{resource.title}</h2>
-            </div>
-            
-            <div className="flex-1 glass-premium rounded-2xl md:rounded-[2rem] overflow-hidden relative border border-white/10 shadow-2xl flex items-center justify-center">
+          <div className="mb-6 text-left relative z-10 shrink-0 px-2">
+            <p className="text-[#D4AF37] text-xs uppercase tracking-widest font-bold mb-2">Viewing {resource.type}</p>
+            <h2 className="serif text-3xl md:text-5xl text-white truncate max-w-4xl">{resource.title}</h2>
+          </div>
+          
+          <div className="flex-1 w-full glass-premium rounded-2xl md:rounded-[2.5rem] overflow-hidden relative border border-white/10 shadow-2xl flex items-center justify-center min-h-[500px]">
 
-              {resource.type === 'pdf' && (
-                 <iframe src={`${resource.url}#toolbar=0`} className="w-full h-full bg-[#111]"></iframe>
-              )}
+            {resource.type === 'pdf' && (
+               <iframe src={`${resource.url}#toolbar=0`} className="w-full h-full bg-[#111]"></iframe>
+            )}
 
-              {resource.type === 'image' && (
-                <div className="w-full h-full p-4 md:p-8 overflow-auto flex items-center justify-center custom-scrollbar">
-                   <img src={resource.url} alt={resource.title} className="max-w-full max-h-full object-contain rounded-2xl md:rounded-[1.5rem] border border-white/5" />
+            {resource.type === 'image' && (
+              <div className="w-full h-full p-4 md:p-8 overflow-auto flex items-center justify-center custom-scrollbar">
+                 <img src={resource.url} alt={resource.title} className="max-w-full max-h-full object-contain rounded-2xl md:rounded-[1.5rem] border border-white/5" />
+              </div>
+            )}
+
+            {resource.type === 'collage' && <CollageSlider resource={resource} />}
+
+            {resource.type === 'text' && (
+              <div className="w-full h-full flex flex-col items-center p-6 md:p-16 overflow-y-auto custom-scrollbar bg-black/50">
+                <div className="max-w-4xl w-full glass p-8 md:p-14 rounded-2xl md:rounded-[2rem] border border-white/5">
+                  <FileText size={48} className="text-[#D4AF37] mb-8 mx-auto opacity-50" />
+                  <p className="text-gray-200 whitespace-pre-wrap leading-loose font-light text-base md:text-lg font-sans text-justify">
+                    {resource.url}
+                  </p>
                 </div>
-              )}
+              </div>
+            )}
 
-              {resource.type === 'collage' && <CollageSlider resource={resource} />}
-
-              {resource.type === 'text' && (
-                <div className="w-full h-full flex flex-col items-center p-6 md:p-16 overflow-y-auto custom-scrollbar bg-black/50">
-                  <div className="max-w-3xl w-full glass p-6 md:p-12 rounded-2xl md:rounded-[2rem] border border-white/5">
-                    <FileText size={48} className="text-[#D4AF37] mb-6 mx-auto opacity-50" />
-                    <p className="text-gray-200 whitespace-pre-wrap leading-loose font-light text-base md:text-lg font-sans text-justify">
-                      {resource.url}
-                    </p>
-                  </div>
+            {resource.type === 'link' && (
+              <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-black/50">
+                <div className="glass-premium p-8 md:p-12 rounded-2xl md:rounded-[2rem] border border-white/10 max-w-md w-full">
+                  <LinkIcon size={56} className="text-[#D4AF37] mb-6 mx-auto" />
+                  <h3 className="serif text-3xl md:text-4xl text-white mb-4">External Resource</h3>
+                  <p className="text-gray-300 mb-8 text-sm md:text-base font-light leading-relaxed">This resource points to an external link. Click below to open it securely.</p>
+                  <a href={resource.url} target="_blank" rel="noreferrer" className="inline-block bg-[#D4AF37] text-black px-8 py-4 rounded-xl text-xs md:text-sm font-bold uppercase tracking-widest hover:bg-[#F9E29D] transition-colors shadow-lg">
+                    Open Link Now
+                  </a>
                 </div>
-              )}
-
-              {resource.type === 'link' && (
-                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-black/50">
-                  <div className="glass-premium p-8 md:p-12 rounded-2xl md:rounded-[2rem] border border-white/10 max-w-md w-full">
-                    <LinkIcon size={56} className="text-[#D4AF37] mb-6 mx-auto" />
-                    <h3 className="serif text-3xl md:text-4xl text-white mb-4">External Resource</h3>
-                    <p className="text-gray-300 mb-8 text-sm md:text-base font-light leading-relaxed">This resource points to an external link. Click below to open it securely.</p>
-                    <a href={resource.url} target="_blank" rel="noreferrer" className="inline-block bg-[#D4AF37] text-black px-8 py-4 rounded-xl text-xs md:text-sm font-bold uppercase tracking-widest hover:bg-[#F9E29D] transition-colors shadow-lg">
-                      Open Link Now
-                    </a>
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       );
@@ -1922,8 +1923,8 @@
       );
     }
 
-    function ResourceCreatorModal({ courseId, parentId, onClose }) {
-      const [type, setType] = useState('pdf');
+    function ResourceCreatorModal({ courseId, parentId, onClose, defaultType = 'pdf' }) {
+      const [type, setType] = useState(defaultType);
       const [inputMode, setInputMode] = useState('upload');
       const [uploading, setUploading] = useState(false);
       const [progress, setProgress] = useState(0);
@@ -1936,44 +1937,68 @@
 
       useEffect(() => {
         if (!allowsUpload) setInputMode('url');
+        else setInputMode('upload');
       }, [type, allowsUpload]);
 
       const uploadToStorage = (file, pathPrefix) => {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
+          let fileToUpload = file;
+          
           if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (event) => {
-              const img = new Image();
-              img.src = event.target.result;
-              img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX = 1000;
-                let { width, height } = img;
-                if (width > height && width > MAX) { height *= MAX / width; width = MAX; }
-                else if (height > MAX) { width *= MAX / height; height = MAX; }
-                canvas.width = width;
-                canvas.height = height;
-                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', 0.6));
-              };
-            };
-            reader.onerror = () => reject(new Error("Failed to read image file"));
-            return;
+            try {
+              fileToUpload = await new Promise((res, rej) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                  const img = new Image();
+                  img.src = event.target.result;
+                  img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX = 1920;
+                    let { width, height } = img;
+                    if (width > height && width > MAX) { height *= MAX / width; width = MAX; }
+                    else if (height > MAX) { width *= MAX / height; height = MAX; }
+                    canvas.width = width;
+                    canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    
+                    canvas.toBlob((blob) => {
+                      if(blob) {
+                         // Preserve file metadata by converting blob back to a File
+                         const compressedFile = new File([blob], file.name || "image.jpg", { type: 'image/jpeg' });
+                         res(compressedFile);
+                      } else rej(new Error("Image compression failed"));
+                    }, 'image/jpeg', 0.8);
+                  };
+                  img.onerror = () => rej(new Error("Failed to load image logic"));
+                };
+                reader.onerror = () => rej(new Error("Failed to read original image file"));
+              });
+            } catch (e) {
+              console.warn("Failed to compress image, falling back to original file upload.", e);
+              fileToUpload = file;
+            }
           }
 
           try {
-            const uniqueName = `${crypto.randomUUID()}_${file.name}`;
+            const uniqueName = `${crypto.randomUUID()}_${fileToUpload.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
             const sRef = storageRef(storage, `artifacts/${appId}/public/data/${pathPrefix}_${uniqueName}`);
-            const uploadTask = uploadBytesResumable(sRef, file);
+            const uploadTask = uploadBytesResumable(sRef, fileToUpload);
 
             uploadTask.on('state_changed', 
               (snapshot) => setProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)), 
-              (error) => reject(new Error("Storage Error. Check limits.")), 
-              async () => resolve(await getDownloadURL(uploadTask.snapshot.ref))
+              (error) => {
+                console.error("Storage upload error:", error);
+                reject(new Error("Storage Error. Storage limit may be exceeded."));
+              }, 
+              async () => {
+                const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                resolve(downloadUrl);
+              }
             );
           } catch (err) {
-            reject(new Error("Storage Error. Use 'External URL' mode."));
+            console.error(err);
+            reject(new Error("Upload logic error. Try an external URL mode instead."));
           }
         });
       };
@@ -2026,7 +2051,7 @@
             })
           });
 
-          toast("Material Published");
+          toast("Material Published Successfully");
           onClose();
         } catch(err) {
           toast(err.message || "Error publishing material");
@@ -2071,6 +2096,9 @@
               )}
               
               <div className="glass border border-white/5 rounded-2xl p-5 md:p-8">
+                {type === 'text' && <div className="text-[#D4AF37] text-xs uppercase tracking-widest font-bold mb-4 bg-[#D4AF37]/10 p-3 rounded-lg border border-[#D4AF37]/20 flex items-center gap-2"><FileText size={16}/> Create a formatted text note for students to read.</div>}
+                {type === 'link' && <div className="text-[#D4AF37] text-xs uppercase tracking-widest font-bold mb-4 bg-[#D4AF37]/10 p-3 rounded-lg border border-[#D4AF37]/20 flex items-center gap-2"><LinkIcon size={16}/> Add an external link that will open securely in a new tab.</div>}
+
                 {inputMode === 'upload' && allowsUpload ? (
                   <div className="space-y-6">
                     <div>
@@ -2092,7 +2120,7 @@
                 ) : (
                   <div className="space-y-5">
                     {type === 'text' ? (
-                      <textarea name="url" placeholder="Type or paste text content here..." required disabled={uploading} rows={8} className="w-full bg-black/50 border border-white/10 p-4 md:p-5 rounded-xl text-sm md:text-base outline-none focus:border-[#D4AF37] transition-all text-white font-light resize-none custom-scrollbar" />
+                      <textarea name="url" placeholder="Type or paste formatted text notes here..." required disabled={uploading} rows={8} className="w-full bg-black/50 border border-white/10 p-4 md:p-5 rounded-xl text-sm md:text-base outline-none focus:border-[#D4AF37] transition-all text-white font-light resize-none custom-scrollbar" />
                     ) : type === 'collage' ? (
                       <textarea name="url" placeholder="COMMA SEPARATED IMAGE URLS" required disabled={uploading} rows={4} className="w-full bg-black/50 border border-white/10 p-4 md:p-5 rounded-xl text-xs md:text-sm tracking-widest uppercase outline-none focus:border-[#D4AF37] transition-all text-white font-light resize-none custom-scrollbar placeholder:text-gray-600" />
                     ) : type === 'youtube' ? (
@@ -2103,7 +2131,7 @@
                           <input type="file" accept="image/*" disabled={uploading} onChange={(e) => setThumbnailFile(e.target.files[0])} className="w-full text-gray-400 text-sm" />
                         </div>
                         <div className="pt-5 border-t border-white/5">
-                          <textarea name="desc" placeholder="ADDITIONAL NOTES OR DESCRIPTION..." disabled={uploading} rows={4} className="w-full bg-black/50 border border-white/10 p-4 md:p-5 rounded-xl text-sm tracking-widest uppercase outline-none focus:border-[#D4AF37] transition-all text-white font-light resize-none custom-scrollbar placeholder:text-gray-600" />
+                          <textarea name="desc" placeholder="ADDITIONAL NOTES OR DESCRIPTION FOR THIS VIDEO..." disabled={uploading} rows={4} className="w-full bg-black/50 border border-white/10 p-4 md:p-5 rounded-xl text-sm tracking-widest uppercase outline-none focus:border-[#D4AF37] transition-all text-white font-light resize-none custom-scrollbar placeholder:text-gray-600" />
                         </div>
                       </>
                     ) : (
@@ -2218,5 +2246,3 @@
   </script>
 </body>
 </html>
-
-
