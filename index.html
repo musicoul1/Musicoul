@@ -132,7 +132,7 @@
     }
     
     .goog-te-combo:focus { border-color: #D4AF37 !important; }
-    .skiptranslate iframe, .goog-te-banner-frame.skiptranslate { display: none !important; }
+    .skiptranslate iframe, .goog-te-banner-frame.skTranslate { display: none !important; }
     body { top: 0px !important; }
     #google_translate_element_wrapper { position: absolute; opacity: 0; z-index: -999; pointer-events: none; }
   </style>
@@ -257,7 +257,7 @@
         for(const child of children) {
             ids.push(child.id);
             if(child.isFolder || child.type === 'youtube' || child.type === 'video') {
-               ids = ids.concat(getAllChildrenIds(child.id, resources));
+                ids = ids.concat(getAllChildrenIds(child.id, resources));
             }
         }
         return ids;
@@ -786,7 +786,7 @@
           </aside>
 
           {/* MAIN CONTENT AREA */}
-          <main className={`flex-1 overflow-y-auto relative w-full h-full pb-8 lg:pb-0 ${activeTab === 'm-library' || activeTab === 'home' ? 'bg-[#050505]' : 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-black via-[#050505] to-[#050505]'}`}>
+          <main className={`flex-1 overflow-y-auto relative w-full h-full pb-8 lg:pb-0 ${activeTab === 'm-library' ? 'bg-[#020813]' : activeTab === 'home' ? 'bg-[#050505]' : 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-black via-[#050505] to-[#050505]'}`}>
             <div className={`w-full min-h-full ${activeTab === 'm-library' || activeTab === 'home' ? 'pb-32' : 'p-5 sm:p-8 md:p-12 pb-32 max-w-7xl mx-auto'}`}>
               
               {activeTab === 'home' && <UserHome user={user} userData={userData} courses={allCourses} onGoToLibrary={() => handleTabChange('m-library')} />}
@@ -825,32 +825,44 @@
     // USER HOME (New Feature)
     // ==========================================
     function UserHome({ user, userData, courses, onGoToLibrary }) {
+      const scrollToCourses = () => {
+         document.getElementById('course-catalog')?.scrollIntoView({ behavior: 'smooth' });
+      };
+
       return (
         <div className="animate-in fade-in duration-1000 w-full min-h-full text-white bg-[#050505]">
           
           {/* Welcome Hero Banner */}
-          <div className="relative w-full h-[60vh] md:h-[70vh] mb-12 flex items-center justify-center overflow-hidden shadow-2xl group border-b border-white/5">
+          <div className="relative w-full h-[60vh] md:h-[75vh] mb-12 flex items-center justify-center overflow-hidden shadow-2xl group border-b border-white/5">
              <div className="absolute inset-0 z-0">
                <img src="Assets/Images/Logo.png" className="w-full h-full object-contain opacity-[0.03] scale-110 group-hover:scale-100 transition-transform duration-[20s]" />
                <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-[#050505]"></div>
              </div>
              
              <div className="relative z-10 text-center px-6 max-w-4xl mx-auto flex flex-col items-center">
-                <Crown size={48} className="text-[#D4AF37] mb-6 opacity-80" />
+                <div className="w-20 h-20 md:w-28 md:h-28 mb-8 relative animate-in zoom-in duration-1000">
+                  <div className="absolute inset-0 bg-[#D4AF37] blur-[50px] opacity-20 rounded-full"></div>
+                  <img src="Assets/Images/Logo.png" alt="Musicoul Logo" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_20px_rgba(212,175,55,0.4)]" />
+                </div>
                 <h1 className="serif text-5xl md:text-7xl lg:text-8xl mb-6 leading-tight text-white drop-shadow-2xl">
                    Welcome to <br/> <span className="gold-gradient-text italic">Musicoul</span>
                 </h1>
                 <p className="text-gray-300 text-sm md:text-base font-light max-w-2xl mx-auto mb-10 leading-relaxed drop-shadow-md">
                    Discover our premium conservatory portal. Explore specialized courses or browse the M-Library for exclusive content.
                 </p>
-                <button onClick={onGoToLibrary} className="bg-gradient-to-br from-[#D4AF37] to-[#B38D22] text-black px-10 py-5 rounded-full text-sm font-bold uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_10px_30px_rgba(212,175,55,0.3)] flex items-center gap-3">
-                   <Film size={20} /> Enter M-Library
-                </button>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full sm:w-auto">
+                    <button onClick={onGoToLibrary} className="w-full sm:w-auto bg-gradient-to-r from-[#0A1931] via-[#1E3A8A] to-[#0A1931] text-blue-50 border border-[#60A5FA] px-8 py-4 md:py-5 rounded-full text-xs md:text-sm font-bold uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(30,58,138,0.7)] hover:shadow-[0_0_40px_rgba(96,165,250,0.5)] flex items-center justify-center gap-3 bg-[length:200%_auto] hover:bg-right">
+                       <Film size={20} className="text-blue-300" /> Enter M-Library
+                    </button>
+                    <button onClick={scrollToCourses} className="w-full sm:w-auto bg-gradient-to-br from-[#D4AF37] via-[#FFDF73] to-[#B38D22] text-black border border-white/40 px-8 py-4 md:py-5 rounded-full text-xs md:text-sm font-bold uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_10px_30px_rgba(212,175,55,0.4)] flex items-center justify-center gap-3 bg-[length:200%_auto] hover:bg-right">
+                       <BookOpen size={20} /> Our Courses
+                    </button>
+                </div>
              </div>
           </div>
 
           {/* Public Course Catalog */}
-          <div className="px-6 md:px-12 pb-24 max-w-7xl mx-auto">
+          <div id="course-catalog" className="px-6 md:px-12 pb-24 max-w-7xl mx-auto scroll-mt-24">
              <div className="mb-10 flex items-center gap-5 md:gap-8">
                <h3 className="serif text-3xl md:text-4xl gold-gradient-text italic font-bold">Course Catalog</h3>
                <div className="h-[2px] flex-1 bg-gradient-to-r from-[#D4AF37]/50 to-transparent"></div>
@@ -911,89 +923,92 @@
       useHardwareBack(!!previewResource, () => setPreviewResource(null));
 
       const handleViewResource = (res) => {
-         if (res.isPremium && !isPrivileged) {
+          if (res.isPremium && !isPrivileged) {
             toast("Premium Content: Please enroll in a course to unlock this material.");
             return;
-         }
-         if (res.type === 'link') {
+          }
+          if (res.type === 'link') {
             window.open(res.url, '_blank');
             return;
-         }
-         window.history.pushState({ internalNav: true }, "");
-         setPreviewResource(res);
+          }
+          window.history.pushState({ internalNav: true }, "");
+          setPreviewResource(res);
       };
 
       const handleOpenFolder = (folderId) => {
-         window.history.pushState({ internalNav: true }, "");
-         setActiveFolderId(folderId);
+          window.history.pushState({ internalNav: true }, "");
+          setActiveFolderId(folderId);
       };
 
       const handleOpenSectionDetail = (sectionId) => {
-         window.history.pushState({ internalNav: true }, "");
-         setActiveSectionId(sectionId);
+          window.history.pushState({ internalNav: true }, "");
+          setActiveSectionId(sectionId);
       };
 
       if (previewResource) {
-         return <ResourcePreviewer resource={previewResource} course={{resources: []}} userData={userData} onClose={() => window.history.back()} />;
+          return <ResourcePreviewer resource={previewResource} course={{resources: []}} userData={userData} onClose={() => window.history.back()} />;
       }
 
       if (mode === 'manage' && isAdmin) {
-         if (activeSectionId) {
+          if (activeSectionId) {
             const section = allLibrary.find(s => s.id === activeSectionId);
             return <LibrarySectionEditor section={section} onBack={() => window.history.back()} showConfirm={showConfirm} />;
-         }
-         return <LibraryAdminManager allLibrary={allLibrary} onOpenSection={(id) => { window.history.pushState({ internalNav: true }, ""); setActiveSectionId(id); }} onBackToBrowse={() => setMode('browse')} showConfirm={showConfirm} />;
+          }
+          return <LibraryAdminManager allLibrary={allLibrary} onOpenSection={(id) => { window.history.pushState({ internalNav: true }, ""); setActiveSectionId(id); }} onBackToBrowse={() => setMode('browse')} showConfirm={showConfirm} />;
       }
 
       // --- Section Detail View (Netflix Series Page) ---
       if (activeSectionId && mode === 'browse') {
-         const section = allLibrary.find(s => s.id === activeSectionId);
-         if (section) {
+          const section = allLibrary.find(s => s.id === activeSectionId);
+          if (section) {
             if (activeFolderId) {
                 return <LibraryFolderView section={section} folderId={activeFolderId} onBack={() => window.history.back()} onViewResource={handleViewResource} onOpenFolder={handleOpenFolder} isPrivileged={isPrivileged} />;
             }
             return <LibrarySectionDetailView section={section} onBack={() => window.history.back()} onViewResource={handleViewResource} onOpenFolder={handleOpenFolder} isPrivileged={isPrivileged} />;
-         }
+          }
       }
 
       // --- Browse Mode (Netflix UI) ---
       
       // Determine the Hero Section. 
-      // If a user hovers over a row that has a coverUrl, use that. Otherwise use the newest featured section.
+      // Admin explicit featured section overrides everything if not hovering.
+      let explicitFeatured = allLibrary.filter(s => s.isFeatured);
+      explicitFeatured.sort((a,b) => (a.createdAt > b.createdAt ? -1 : 1));
+
       let featuredSections = allLibrary.filter(s => s.coverUrl || s.thumbnailUrl);
       featuredSections.sort((a,b) => (a.createdAt > b.createdAt ? -1 : 1));
       
-      let displayHeroSection = hoveredSection || (featuredSections.length > 0 ? featuredSections[0] : null);
+      let displayHeroSection = hoveredSection || (explicitFeatured.length > 0 ? explicitFeatured[0] : (featuredSections.length > 0 ? featuredSections[0] : null));
 
       return (
-        <div className="animate-in fade-in duration-1000 w-full min-h-full text-white bg-[#050505]">
+        <div className="animate-in fade-in duration-1000 w-full min-h-full text-white bg-[#020813]">
           
           {/* Top Admin Toggle */}
           {isAdmin && (
              <div className="absolute top-4 right-4 md:top-8 md:right-8 z-50">
-                <button onClick={() => setMode('manage')} className="bg-[#D4AF37]/20 border border-[#D4AF37]/50 text-[#D4AF37] px-5 py-2.5 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest backdrop-blur-md hover:bg-[#D4AF37] hover:text-black transition-all shadow-[0_0_20px_rgba(212,175,55,0.2)] flex items-center gap-2">
+                <button onClick={() => setMode('manage')} className="bg-[#0A1526]/80 border border-blue-500/30 text-[#D4AF37] px-5 py-2.5 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest backdrop-blur-md hover:bg-[#D4AF37] hover:text-[#020813] transition-all shadow-[0_0_20px_rgba(30,58,138,0.4)] flex items-center gap-2">
                    <Settings size={16} /> Manage Library
                 </button>
              </div>
           )}
 
           {/* Dynamic Hero Section */}
-          <div className="relative w-full h-[70vh] md:h-[85vh] mb-12 flex items-end shadow-2xl overflow-hidden bg-black group transition-all duration-700">
+          <div className="relative w-full h-[70vh] md:h-[85vh] mb-12 flex items-end shadow-2xl overflow-hidden bg-[#020813] group transition-all duration-700">
              {displayHeroSection ? (
                 <>
-                  <div className="absolute inset-0 z-0 bg-[#050505]">
+                  <div className="absolute inset-0 z-0 bg-[#020813]">
                       <img 
                         key={displayHeroSection.id} // Forces re-render for fade animation
                         src={displayHeroSection.coverUrl || displayHeroSection.thumbnailUrl} 
                         className="w-full h-full object-cover opacity-60 mix-blend-screen scale-105 group-hover:scale-100 transition-transform duration-[20s] animate-in fade-in zoom-in-105" 
                       />
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent z-10"></div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/90 via-[#050505]/40 to-transparent z-10"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#020813] via-[#020813]/50 to-transparent z-10"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#020813]/90 via-[#020813]/50 to-transparent z-10"></div>
                   <div className="relative z-20 p-6 md:p-16 max-w-4xl animate-in slide-in-from-bottom-10 fade-in duration-700">
                       <div className="flex items-center gap-3 mb-4">
-                         <span className="text-red-600 text-[10px] md:text-xs font-black tracking-[0.3em] uppercase drop-shadow-md">N-SERIES</span>
-                         <span className="text-[#D4AF37] text-[10px] md:text-xs font-bold tracking-widest uppercase border border-[#D4AF37]/30 bg-black/50 px-3 py-1 rounded backdrop-blur-md">Featured Section</span>
+                         <span className="text-blue-400 text-[10px] md:text-xs font-black tracking-[0.3em] uppercase drop-shadow-md">M-SERIES</span>
+                         <span className="text-[#D4AF37] text-[10px] md:text-xs font-bold tracking-widest uppercase border border-blue-500/30 bg-[#0A1526]/60 px-3 py-1 rounded backdrop-blur-md">Featured Section</span>
                       </div>
                       <h1 className="serif text-6xl md:text-8xl lg:text-[7rem] mb-4 leading-none text-white drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] line-clamp-2">{displayHeroSection.title}</h1>
                       <p className="text-gray-200 text-sm md:text-lg mb-8 line-clamp-3 font-light max-w-2xl drop-shadow-xl leading-relaxed">
@@ -1003,17 +1018,17 @@
                         <button onClick={() => handleOpenSectionDetail(displayHeroSection.id)} className="bg-white text-black hover:bg-gray-200 px-8 py-3.5 md:py-4 rounded-lg text-sm md:text-base font-bold transition-all flex items-center gap-3 active:scale-95 shadow-xl">
                            <Play fill="currentColor" size={24} /> Play / Open
                         </button>
-                        <button onClick={() => handleOpenSectionDetail(displayHeroSection.id)} className="bg-white/20 text-white hover:bg-white/30 px-8 py-3.5 md:py-4 rounded-lg text-sm md:text-base font-bold transition-all flex items-center gap-3 active:scale-95 backdrop-blur-md border border-white/10 shadow-xl">
+                        <button onClick={() => handleOpenSectionDetail(displayHeroSection.id)} className="bg-[#0A1526]/60 text-white hover:bg-[#0A1526] hover:border-blue-500/50 px-8 py-3.5 md:py-4 rounded-lg text-sm md:text-base font-bold transition-all flex items-center gap-3 active:scale-95 backdrop-blur-md border border-blue-800/50 shadow-[0_0_15px_rgba(30,58,138,0.3)]">
                            <Info size={24} /> More Info
                         </button>
                       </div>
                   </div>
                 </>
              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#111] to-[#050505] z-10 border-b border-white/5">
-                   <Film size={64} className="text-[#D4AF37] opacity-30 mb-6" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0A1526] to-[#020813] z-10 border-b border-blue-900/30">
+                   <Film size={64} className="text-[#D4AF37] opacity-40 mb-6 drop-shadow-[0_0_15px_rgba(212,175,55,0.4)]" />
                    <h1 className="serif text-5xl md:text-6xl text-white mb-4">M-Library</h1>
-                   <p className="text-gray-400 tracking-widest uppercase font-bold text-xs">Curated Conservatory Content</p>
+                   <p className="text-blue-200/50 tracking-widest uppercase font-bold text-xs">Curated Conservatory Content</p>
                 </div>
              )}
           </div>
@@ -1021,7 +1036,7 @@
           {/* Netflix-Style Scrolling Rows */}
           <div className="pb-20 space-y-12 md:space-y-16 mt-[-4rem] relative z-30">
              {allLibrary.length === 0 ? (
-                <div className="text-center text-gray-500 font-bold uppercase tracking-widest text-xs p-10">No collections available yet.</div>
+                <div className="text-center text-blue-200/40 font-bold uppercase tracking-widest text-xs p-10">No collections available yet.</div>
              ) : (
                 allLibrary.sort((a,b) => (a.createdAt > b.createdAt ? -1 : 1)).map(section => {
                    const rootItems = (section.resources || []).filter(r => r.parentId === null);
@@ -1030,12 +1045,13 @@
                    return (
                      <div key={section.id} className="w-full relative" onMouseEnter={() => setHoveredSection(section)}>
                         <div className="flex items-center justify-between px-6 md:px-16 mb-4 md:mb-5 group/header cursor-pointer" onClick={() => handleOpenSectionDetail(section.id)}>
-                           <div className="flex items-center gap-3">
-                              <h3 className="text-xl md:text-2xl font-bold text-gray-200 group-hover/header:text-white transition-colors">{section.title}</h3>
-                              <div className="opacity-0 group-hover/header:opacity-100 transition-all flex items-center gap-1 text-[#D4AF37] text-[10px] font-bold tracking-widest uppercase translate-x-[-10px] group-hover/header:translate-x-0">
-                                 Explore All <ChevronRight size={16}/>
-                              </div>
-                           </div>
+                            <div className="flex items-center gap-3">
+                               <h3 className="text-xl md:text-2xl font-bold text-gray-200 group-hover/header:text-blue-300 transition-colors">{section.title}</h3>
+                               <div className="opacity-0 group-hover/header:opacity-100 transition-all flex items-center gap-3 text-[#D4AF37] text-[10px] font-bold tracking-widest uppercase translate-x-[-10px] group-hover/header:translate-x-0">
+                                  <button className="bg-blue-900/40 px-4 py-1.5 rounded-md text-blue-300 hover:text-white hover:bg-blue-600 transition-colors border border-blue-500/50 hidden md:block shadow-lg shadow-blue-900/20">OPEN</button>
+                                  <span className="flex items-center">Explore All <ChevronRight size={16}/></span>
+                               </div>
+                            </div>
                         </div>
                         
                         <div className="flex overflow-x-auto gap-3 md:gap-4 px-6 md:px-16 pb-8 pt-4 hide-scrollbar snap-x snap-mandatory">
@@ -1043,17 +1059,17 @@
                               <div 
                                 key={item.id} 
                                 onClick={() => item.isFolder ? handleOpenFolder(item.id) : handleViewResource(item)}
-                                className="netflix-card min-w-[160px] md:min-w-[240px] aspect-[16/9] bg-[#111] rounded-md relative overflow-hidden border border-white/10 cursor-pointer snap-start shrink-0 block"
+                                className="netflix-card min-w-[160px] md:min-w-[240px] aspect-[16/9] bg-[#0A1526] rounded-md relative overflow-hidden border border-blue-900/40 shadow-[0_4px_15px_rgba(0,0,0,0.5)] cursor-pointer snap-start shrink-0 block"
                               >
                                  <img src={item.thumbnailUrl || section.thumbnailUrl || section.coverUrl || 'Assets/Images/Logo.png'} className={`w-full h-full object-cover transition-transform duration-700 ${!item.thumbnailUrl && !section.thumbnailUrl && !section.coverUrl ? 'opacity-20 p-8 object-contain' : 'opacity-80'}`} />
                                  
-                                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent opacity-90"></div>
+                                 <div className="absolute inset-0 bg-gradient-to-t from-[#020813] via-transparent to-transparent opacity-90"></div>
                                  
                                  {/* Hover Info overlay inside card */}
-                                 <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 backdrop-blur-[2px] z-10">
+                                 <div className="absolute inset-0 bg-[#020813]/80 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 backdrop-blur-[2px] z-10">
                                     <div className="flex items-center gap-3 mb-2">
                                        <button className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center hover:bg-[#D4AF37] transition-colors"><Play fill="currentColor" size={14}/></button>
-                                       {item.isFolder && <button className="w-8 h-8 bg-black/50 border border-white/50 text-white rounded-full flex items-center justify-center"><FolderOpen size={14}/></button>}
+                                       {item.isFolder && <button className="w-8 h-8 bg-[#0A1526]/80 border border-blue-500/50 text-[#D4AF37] rounded-full flex items-center justify-center"><FolderOpen size={14}/></button>}
                                     </div>
                                     <h4 className="text-white font-bold text-sm md:text-sm truncate drop-shadow-md">{item.title}</h4>
                                     <p className="text-[#D4AF37] text-[8px] md:text-[9px] uppercase tracking-widest font-bold mt-1 flex items-center gap-1">
@@ -1092,28 +1108,28 @@
        };
 
        return (
-         <div className="animate-in fade-in duration-500 w-full min-h-full bg-[#050505] text-white">
+         <div className="animate-in fade-in duration-500 w-full min-h-full bg-[#020813] text-white">
             
             {/* Massive Detail Hero */}
-            <div className="relative w-full h-[60vh] md:h-[75vh] flex items-end">
+            <div className="relative w-full h-[60vh] md:h-[75vh] flex items-end border-b border-blue-900/30">
                <div className="absolute top-6 left-6 md:top-10 md:left-12 z-50">
-                   <button onClick={onBack} className="w-12 h-12 bg-black/50 border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors backdrop-blur-md shadow-xl">
+                   <button onClick={onBack} className="w-12 h-12 bg-[#0A1526]/60 border border-blue-500/30 rounded-full flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020813] transition-colors backdrop-blur-md shadow-[0_0_15px_rgba(30,58,138,0.5)]">
                       <ChevronLeft size={24} />
                    </button>
                </div>
 
                <div className="absolute inset-0 z-0">
                   <img src={section.coverUrl || section.thumbnailUrl || 'Assets/Images/Logo.png'} className={`w-full h-full object-cover ${!section.coverUrl && !section.thumbnailUrl ? 'opacity-10 object-contain' : 'opacity-60'}`} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent"></div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/40 to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#020813] via-[#020813]/70 to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#020813] via-[#020813]/50 to-transparent"></div>
                </div>
                
                <div className="relative z-10 p-6 md:p-16 max-w-4xl w-full">
                   <h1 className="serif text-5xl md:text-7xl lg:text-8xl mb-4 text-white drop-shadow-2xl font-bold leading-tight">{section.title}</h1>
                   <div className="flex items-center gap-4 mb-6 text-gray-400 text-sm font-bold">
-                     <span className="text-green-500">98% Match</span>
+                     <span className="text-blue-400">98% Match</span>
                      <span>{new Date(section.createdAt).getFullYear()}</span>
-                     <span className="border border-gray-600 px-1.5 py-0.5 rounded text-[10px]">PREMIUM</span>
+                     <span className="border border-[#D4AF37]/50 text-[#D4AF37] px-1.5 py-0.5 rounded text-[10px]">PREMIUM</span>
                      <span>{allResources.length} Items</span>
                   </div>
                   <p className="text-white text-sm md:text-lg mb-8 max-w-2xl leading-relaxed drop-shadow-md">
@@ -1130,35 +1146,35 @@
 
             {/* Asset Grid (Episodes Style) */}
             <div className="px-6 md:px-16 pb-24 mt-8">
-               <div className="flex items-center gap-6 border-b border-white/10 mb-8 pb-4">
+               <div className="flex items-center gap-6 border-b border-blue-900/30 mb-8 pb-4">
                   <h3 className="text-xl md:text-2xl font-bold text-white">Episodes & Resources</h3>
                </div>
 
                {rootItems.length === 0 ? (
-                  <div className="text-center text-gray-500 font-bold uppercase tracking-widest text-xs p-10">No items in this section.</div>
+                  <div className="text-center text-blue-200/40 font-bold uppercase tracking-widest text-xs p-10">No items in this section.</div>
                ) : (
                   <div className="flex flex-col gap-4 max-w-5xl">
                      {rootItems.sort((a,b) => (b.isFolder ? 1 : 0) - (a.isFolder ? 1 : 0)).map((item, idx) => (
                          <div 
                            key={item.id} 
                            onClick={() => item.isFolder ? onOpenFolder(item.id) : onViewResource(item)}
-                           className="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 cursor-pointer transition-all group relative"
+                           className="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-xl hover:bg-[#0A1526]/80 border border-transparent hover:border-blue-800/40 cursor-pointer transition-all group relative"
                          >
-                            <span className="text-gray-600 font-bold text-xl md:text-2xl w-8 md:text-center shrink-0 hidden md:block">{idx + 1}</span>
+                            <span className="text-blue-900/60 font-bold text-xl md:text-2xl w-8 md:text-center shrink-0 hidden md:block">{idx + 1}</span>
                             
-                            <div className="w-full md:w-48 aspect-[16/9] bg-[#111] rounded-md shrink-0 relative overflow-hidden shadow-lg border border-white/5">
+                            <div className="w-full md:w-48 aspect-[16/9] bg-[#0A1526] rounded-md shrink-0 relative overflow-hidden shadow-[0_4px_15px_rgba(0,0,0,0.5)] border border-blue-900/40">
                                <img src={item.thumbnailUrl || (item.isFolder ? section.thumbnailUrl || section.coverUrl || 'Assets/Images/Logo.png' : 'Assets/Images/Logo.png')} className={`w-full h-full object-cover transition-opacity ${!item.thumbnailUrl ? 'opacity-30 p-4 object-contain' : 'opacity-80 group-hover:opacity-100'}`} />
-                               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
-                                   {item.isFolder ? <FolderOpen size={24} className="text-white"/> : <PlayCircle size={32} className="text-white"/>}
+                               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-[#020813]/50 backdrop-blur-[2px]">
+                                   {item.isFolder ? <FolderOpen size={24} className="text-[#D4AF37]"/> : <PlayCircle size={32} className="text-[#D4AF37]"/>}
                                </div>
                             </div>
                             
                             <div className="flex-1 min-w-0 pr-4 flex flex-col justify-center">
                                <div className="flex items-center justify-between mb-2">
-                                  <h4 className="text-white font-bold text-sm md:text-base truncate group-hover:text-white transition-colors">{item.title}</h4>
-                                  <span className="text-gray-500 text-xs">{item.isFolder ? 'Collection' : item.type}</span>
+                                  <h4 className="text-white font-bold text-sm md:text-base truncate group-hover:text-blue-300 transition-colors">{item.title}</h4>
+                                  <span className="text-blue-300/60 text-xs">{item.isFolder ? 'Collection' : item.type}</span>
                                </div>
-                               <p className="text-gray-400 text-xs md:text-sm font-light line-clamp-2 leading-relaxed">{item.description || "No description provided for this specific item."}</p>
+                               <p className="text-blue-100/40 text-xs md:text-sm font-light line-clamp-2 leading-relaxed">{item.description || "No description provided for this specific item."}</p>
                             </div>
                          </div>
                      ))}
@@ -1171,72 +1187,72 @@
 
     // --- Library Folder Viewer (Netflix Episode List Style, deeper level) ---
     function LibraryFolderView({ section, folderId, onBack, onViewResource, onOpenFolder, isPrivileged }) {
-        const allResources = section.resources || [];
-        const currentResources = allResources.filter(r => r.parentId === folderId);
-        const folderInfo = allResources.find(r => r.id === folderId);
-        const breadcrumbs = buildBreadcrumbs(folderId, allResources);
+         const allResources = section.resources || [];
+         const currentResources = allResources.filter(r => r.parentId === folderId);
+         const folderInfo = allResources.find(r => r.id === folderId);
+         const breadcrumbs = buildBreadcrumbs(folderId, allResources);
 
-        return (
-           <div className="animate-in fade-in duration-500 w-full min-h-full bg-[#050505] text-white pt-6 md:pt-10 px-4 md:px-12 pb-24">
-               <div className="mb-10">
-                   <button onClick={onBack} className="w-10 h-10 bg-white/10 border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors backdrop-blur-md">
-                      <ChevronLeft size={20} />
-                   </button>
-               </div>
-               
-               <header className="mb-10 border-b border-white/10 pb-8 flex flex-col md:flex-row md:items-end gap-6 md:gap-10">
-                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-gradient-to-br from-[#111] to-black border border-white/10 flex items-center justify-center text-[#D4AF37] shrink-0 shadow-2xl">
-                     <FolderOpen size={48} className="opacity-50" />
-                  </div>
-                  <div>
-                      <div className="flex flex-wrap items-center gap-2 mb-3 text-[10px] md:text-xs font-bold tracking-widest uppercase text-[#D4AF37]">
-                          <span className="text-gray-500">{section.title}</span>
-                          {breadcrumbs.map(f => (
-                             <React.Fragment key={f.id}>
-                                <ChevronRight size={14} className="text-gray-600" />
-                                <span>{f.title}</span>
-                             </React.Fragment>
-                          ))}
-                      </div>
-                      <h1 className="serif text-4xl md:text-5xl lg:text-6xl text-white break-words">{folderInfo?.title || "Collection"}</h1>
-                  </div>
-               </header>
+         return (
+            <div className="animate-in fade-in duration-500 w-full min-h-full bg-[#020813] text-white pt-6 md:pt-10 px-4 md:px-12 pb-24">
+                <div className="mb-10">
+                    <button onClick={onBack} className="w-10 h-10 bg-[#0A1526]/60 border border-blue-500/30 rounded-full flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020813] transition-colors backdrop-blur-md shadow-[0_0_15px_rgba(30,58,138,0.5)]">
+                       <ChevronLeft size={20} />
+                    </button>
+                </div>
+                
+                <header className="mb-10 border-b border-blue-900/30 pb-8 flex flex-col md:flex-row md:items-end gap-6 md:gap-10">
+                   <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-gradient-to-br from-[#0A1526] to-[#020813] border border-blue-800/40 flex items-center justify-center text-[#D4AF37] shrink-0 shadow-[0_0_30px_rgba(30,58,138,0.2)]">
+                      <FolderOpen size={48} className="opacity-80" />
+                   </div>
+                   <div>
+                       <div className="flex flex-wrap items-center gap-2 mb-3 text-[10px] md:text-xs font-bold tracking-widest uppercase text-[#D4AF37]">
+                           <span className="text-blue-300/60">{section.title}</span>
+                           {breadcrumbs.map(f => (
+                              <React.Fragment key={f.id}>
+                                 <ChevronRight size={14} className="text-blue-500/40" />
+                                 <span>{f.title}</span>
+                              </React.Fragment>
+                           ))}
+                       </div>
+                       <h1 className="serif text-4xl md:text-5xl lg:text-6xl text-white break-words">{folderInfo?.title || "Collection"}</h1>
+                   </div>
+                </header>
 
-               {currentResources.length === 0 ? (
-                  <div className="text-center text-gray-500 font-bold uppercase tracking-widest text-xs p-20 border border-white/5 rounded-3xl bg-[#0a0a0a]">Empty Collection</div>
-               ) : (
-                  <div className="flex flex-col gap-3 md:gap-4 max-w-5xl">
-                     {currentResources.sort((a,b) => (b.isFolder ? 1 : 0) - (a.isFolder ? 1 : 0)).map((item, idx) => (
-                         <div 
-                           key={item.id} 
-                           onClick={() => item.isFolder ? onOpenFolder(item.id) : onViewResource(item)}
-                           className="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 cursor-pointer transition-all group relative"
-                         >
-                            <span className="text-gray-600 font-bold text-xl md:text-2xl w-8 md:text-center shrink-0 hidden md:block">{idx + 1}</span>
-                            
-                            <div className="w-full md:w-40 aspect-[16/9] bg-[#111] rounded-md shrink-0 relative overflow-hidden shadow-lg border border-white/5">
-                               <img src={item.thumbnailUrl || (item.isFolder ? section.thumbnailUrl || section.coverUrl || 'Assets/Images/Logo.png' : 'Assets/Images/Logo.png')} className={`w-full h-full object-cover transition-opacity ${!item.thumbnailUrl ? 'opacity-30 p-2 object-contain' : 'opacity-80 group-hover:opacity-100'}`} />
-                               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
-                                   {item.isFolder ? <FolderOpen size={24} className="text-white"/> : <PlayCircle size={28} className="text-white"/>}
-                               </div>
-                            </div>
-                            
-                            <div className="flex-1 min-w-0 pr-4 flex flex-col justify-center">
-                               <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center gap-2">
-                                     <h4 className="text-white font-bold text-sm md:text-base truncate group-hover:text-white transition-colors">{item.title}</h4>
-                                     {item.isPremium && <Crown size={12} className="text-[#D4AF37]" />}
-                                  </div>
-                                  <span className="text-gray-500 text-[10px] uppercase tracking-widest font-bold">{item.isFolder ? 'Collection' : item.type}</span>
-                               </div>
-                               <p className="text-gray-400 text-xs md:text-sm font-light line-clamp-2 leading-relaxed">{item.description || (item.isFolder ? "Open Collection" : `Asset Type: ${item.type.toUpperCase()}`)}</p>
-                            </div>
-                         </div>
-                     ))}
-                  </div>
-               )}
-           </div>
-        );
+                {currentResources.length === 0 ? (
+                   <div className="text-center text-blue-200/40 font-bold uppercase tracking-widest text-xs p-20 border border-blue-900/30 rounded-3xl bg-[#0A1526]/30">Empty Collection</div>
+                ) : (
+                   <div className="flex flex-col gap-3 md:gap-4 max-w-5xl">
+                      {currentResources.sort((a,b) => (b.isFolder ? 1 : 0) - (a.isFolder ? 1 : 0)).map((item, idx) => (
+                          <div 
+                            key={item.id} 
+                            onClick={() => item.isFolder ? onOpenFolder(item.id) : onViewResource(item)}
+                            className="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-xl hover:bg-[#0A1526]/80 border border-transparent hover:border-blue-800/40 cursor-pointer transition-all group relative"
+                          >
+                             <span className="text-blue-900/60 font-bold text-xl md:text-2xl w-8 md:text-center shrink-0 hidden md:block">{idx + 1}</span>
+                             
+                             <div className="w-full md:w-40 aspect-[16/9] bg-[#0A1526] rounded-md shrink-0 relative overflow-hidden shadow-[0_4px_15px_rgba(0,0,0,0.5)] border border-blue-900/40">
+                                <img src={item.thumbnailUrl || (item.isFolder ? section.thumbnailUrl || section.coverUrl || 'Assets/Images/Logo.png' : 'Assets/Images/Logo.png')} className={`w-full h-full object-cover transition-opacity ${!item.thumbnailUrl ? 'opacity-30 p-2 object-contain' : 'opacity-80 group-hover:opacity-100'}`} />
+                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-[#020813]/50 backdrop-blur-[2px]">
+                                    {item.isFolder ? <FolderOpen size={24} className="text-[#D4AF37]"/> : <PlayCircle size={28} className="text-[#D4AF37]"/>}
+                                </div>
+                             </div>
+                             
+                             <div className="flex-1 min-w-0 pr-4 flex flex-col justify-center">
+                                <div className="flex items-center justify-between mb-2">
+                                   <div className="flex items-center gap-2">
+                                      <h4 className="text-white font-bold text-sm md:text-base truncate group-hover:text-blue-300 transition-colors">{item.title}</h4>
+                                      {item.isPremium && <Crown size={12} className="text-[#D4AF37]" />}
+                                   </div>
+                                   <span className="text-blue-300/60 text-[10px] uppercase tracking-widest font-bold">{item.isFolder ? 'Collection' : item.type}</span>
+                                </div>
+                                <p className="text-blue-100/40 text-xs md:text-sm font-light line-clamp-2 leading-relaxed">{item.description || (item.isFolder ? "Open Collection" : `Asset Type: ${item.type.toUpperCase()}`)}</p>
+                             </div>
+                          </div>
+                      ))}
+                   </div>
+                )}
+            </div>
+         );
     }
 
     // --- Admin Views for Library ---
@@ -1252,10 +1268,19 @@
               title: form.title.value,
               description: form.description.value,
               thumbnailUrl: form.thumbnailUrl.value || "",
-              coverUrl: form.coverUrl.value || ""
+              coverUrl: form.coverUrl.value || "",
+              isFeatured: form.isFeatured?.checked || false
            };
 
            try {
+             // Ensure only one featured section at a time
+             if (dataToSave.isFeatured) {
+                const others = allLibrary.filter(s => s.isFeatured && s.id !== editSectionInfo?.id);
+                for (const s of others) {
+                   await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'library', s.id), { isFeatured: false });
+                }
+             }
+
              if (editSectionInfo) {
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'library', editSectionInfo.id), dataToSave);
                 toast("Section Updated");
@@ -1294,7 +1319,7 @@
         }
 
         return (
-           <div className="animate-in fade-in slide-in-from-right-8 duration-500 w-full min-h-full px-4 md:px-12 py-8">
+           <div className="animate-in fade-in slide-in-from-right-8 duration-500 w-full min-h-full px-4 md:px-12 py-8 bg-[#020813]">
                <button onClick={onBackToBrowse} className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest mb-8 hover:text-white transition-colors flex items-center gap-2">
                   <ChevronLeft size={18} /> Back to Browse
                </button>
@@ -1302,38 +1327,41 @@
                <header className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-12">
                   <div>
                      <h1 className="serif text-4xl md:text-5xl lg:text-6xl mb-3 text-white">Library <span className="gold-gradient-text italic">Manager</span></h1>
-                     <p className="text-gray-400 text-sm font-light">Create and organize massive content rows & Netflix-style detail pages.</p>
+                     <p className="text-blue-200/60 text-sm font-light">Create and organize massive content rows & Netflix-style detail pages.</p>
                   </div>
-                  <button onClick={() => setShowModal(true)} className="bg-gradient-to-br from-[#D4AF37] to-[#B38D22] text-black px-6 py-4 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(212,175,55,0.3)] flex items-center justify-center gap-3 shrink-0 hover:scale-105 transition-transform active:scale-95">
+                  <button onClick={() => setShowModal(true)} className="bg-gradient-to-br from-blue-900 to-[#0A1526] border border-blue-500/50 text-[#D4AF37] px-6 py-4 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(30,58,138,0.4)] flex items-center justify-center gap-3 shrink-0 hover:scale-105 transition-transform active:scale-95">
                      <Plus size={20} /> New Section
                   </button>
                </header>
 
                <div className="space-y-4 max-w-5xl">
                   {allLibrary.sort((a,b) => (a.createdAt > b.createdAt ? -1 : 1)).map(section => (
-                     <div key={section.id} onClick={() => onOpenSection(section.id)} className="glass-premium p-4 md:p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between border border-[#D4AF37]/20 hover:border-[#D4AF37]/50 cursor-pointer group hover-lift shadow-lg gap-4">
+                     <div key={section.id} onClick={() => onOpenSection(section.id)} className="bg-[#0A1526]/50 p-4 md:p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between border border-blue-900/40 hover:border-blue-500/50 cursor-pointer group hover-lift shadow-[0_4px_15px_rgba(0,0,0,0.4)] gap-4 transition-all">
                         <div className="flex items-center gap-5 overflow-hidden pr-4">
-                           <div className="w-24 md:w-40 aspect-video bg-[#111] rounded-lg border border-white/10 overflow-hidden shrink-0 shadow-inner relative">
+                           <div className="w-24 md:w-40 aspect-video bg-[#020813] rounded-lg border border-blue-800/30 overflow-hidden shrink-0 shadow-inner relative">
                                <img src={section.coverUrl || section.thumbnailUrl || 'Assets/Images/Logo.png'} className={`w-full h-full object-cover ${!section.coverUrl && !section.thumbnailUrl ? 'opacity-30 p-2 object-contain' : ''}`} />
                            </div>
                            <div className="flex-1 min-w-0">
-                              <h3 className="serif text-2xl md:text-3xl text-white mb-1 group-hover:text-[#D4AF37] transition-colors truncate">{section.title}</h3>
-                              <p className="text-gray-400 text-xs font-light line-clamp-1 mb-2">{section.description}</p>
-                              <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">{section.resources?.length || 0} Assets Inside</p>
+                              <div className="flex items-center gap-3 mb-1">
+                                 <h3 className="serif text-2xl md:text-3xl text-white group-hover:text-[#D4AF37] transition-colors truncate">{section.title}</h3>
+                                 {section.isFeatured && <span className="bg-blue-900/50 border border-blue-400 text-blue-300 px-2 py-0.5 rounded text-[8px] font-bold tracking-widest uppercase">Featured Hero</span>}
+                              </div>
+                              <p className="text-blue-100/40 text-xs font-light line-clamp-1 mb-2">{section.description}</p>
+                              <p className="text-blue-400/60 text-[10px] font-bold uppercase tracking-widest">{section.resources?.length || 0} Assets Inside</p>
                            </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0 md:ml-auto">
-                           <button onClick={(e) => openEditModal(section, e)} className="px-4 py-3 bg-black/50 border border-white/10 rounded-xl text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors">
+                           <button onClick={(e) => openEditModal(section, e)} className="px-4 py-3 bg-[#020813]/60 border border-blue-800/40 rounded-xl text-xs font-bold uppercase tracking-widest text-blue-300 hover:text-[#D4AF37] hover:border-[#D4AF37]/50 transition-colors">
                               Edit Details
                            </button>
-                           <button onClick={(e) => deleteSection(section.id, e)} className="w-12 h-12 bg-black/50 border border-white/10 rounded-xl flex items-center justify-center text-gray-500 hover:text-red-400 hover:border-red-500/30 transition-all">
+                           <button onClick={(e) => deleteSection(section.id, e)} className="w-12 h-12 bg-[#020813]/60 border border-blue-800/40 rounded-xl flex items-center justify-center text-blue-300/60 hover:text-red-400 hover:border-red-500/30 transition-all">
                               <Trash2 size={20} />
                            </button>
-                           <ChevronRight size={24} className="text-gray-600 group-hover:text-white ml-2 transition-colors hidden md:block" />
+                           <ChevronRight size={24} className="text-blue-800 group-hover:text-blue-400 ml-2 transition-colors hidden md:block" />
                         </div>
                      </div>
                   ))}
-                  {allLibrary.length === 0 && <div className="p-10 text-center glass rounded-2xl border border-white/5 text-gray-500 text-xs font-bold uppercase tracking-widest">No sections constructed yet.</div>}
+                  {allLibrary.length === 0 && <div className="p-10 text-center bg-[#0A1526]/30 rounded-2xl border border-blue-900/30 text-blue-200/40 text-xs font-bold uppercase tracking-widest">No sections constructed yet.</div>}
                </div>
 
                {showModal && (
@@ -1362,6 +1390,19 @@
                            </div>
                         </div>
 
+                        <div className="pt-4 mt-2 border-t border-blue-900/40">
+                           <label className="flex items-center gap-3 cursor-pointer group">
+                              <div className="relative">
+                                 <input type="checkbox" name="isFeatured" defaultChecked={editSectionInfo?.isFeatured} className="sr-only peer" />
+                                 <div className="w-10 h-6 bg-[#0A1526] border border-blue-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-500 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                              </div>
+                              <span className="text-sm text-blue-300 font-bold tracking-widest uppercase flex items-center gap-2 group-hover:text-white transition-colors">
+                                <Crown size={18} /> Set as Featured Hero
+                              </span>
+                           </label>
+                           <p className="text-[10px] text-blue-200/50 mt-2 font-bold tracking-widest uppercase ml-12">Displays this section at the very top of M-Library.</p>
+                        </div>
+
                         <div className="flex gap-4 pt-4">
                           <button type="button" onClick={closeModals} className="flex-1 py-4 border border-white/10 rounded-2xl text-[11px] font-bold tracking-widest uppercase text-gray-400 hover:text-white transition-colors">Cancel</button>
                           <button type="submit" className="flex-1 bg-[#D4AF37] text-black rounded-2xl text-[11px] font-bold tracking-widest uppercase hover:bg-[#F9E29D] transition-colors shadow-xl">
@@ -1382,8 +1423,8 @@
       const [showFolderModal, setShowFolderModal] = useState(false);
       
       const openFolder = (id) => {
-         window.history.pushState({ internalNav: true }, "");
-         setCurrentFolderId(id);
+          window.history.pushState({ internalNav: true }, "");
+          setCurrentFolderId(id);
       };
 
       const removeResource = async (resId) => {
@@ -1403,22 +1444,22 @@
       const breadcrumbs = buildBreadcrumbs(currentFolderId, allResources);
 
       return (
-         <div className="animate-in fade-in slide-in-from-right-8 duration-500 w-full min-h-full px-4 md:px-12 py-8">
+         <div className="animate-in fade-in slide-in-from-right-8 duration-500 w-full min-h-full px-4 md:px-12 py-8 bg-[#020813]">
             <button onClick={onBack} className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest mb-8 hover:text-white transition-colors flex items-center gap-2">
                <ChevronLeft size={18} /> Back to Sections
             </button>
 
-            <header className="mb-8 md:mb-12 relative rounded-[2rem] overflow-hidden glass-premium border border-[#D4AF37]/20 p-8 md:p-12 shadow-2xl flex flex-col md:flex-row gap-8 items-center md:items-start">
+            <header className="mb-8 md:mb-12 relative rounded-[2rem] overflow-hidden bg-[#0A1526]/40 border border-blue-800/40 p-8 md:p-12 shadow-[0_10px_30px_rgba(30,58,138,0.2)] flex flex-col md:flex-row gap-8 items-center md:items-start backdrop-blur-md">
               {(section.coverUrl || section.thumbnailUrl) && (
                  <div className="absolute inset-0 z-0">
                     <img src={section.coverUrl || section.thumbnailUrl} className="w-full h-full object-cover opacity-20 mix-blend-overlay"/>
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/80 to-[#050505]"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#020813] via-[#020813]/80 to-[#020813]"></div>
                  </div>
               )}
               <div className="relative z-10 flex-1 text-center md:text-left">
                 <span className="bg-[#D4AF37] text-black px-3 py-1.5 rounded-lg text-[10px] md:text-[9px] font-bold uppercase tracking-widest mb-4 inline-block">Section Editor</span>
                 <h1 className="serif text-3xl md:text-5xl mb-2 text-white leading-tight break-words">{section.title}</h1>
-                <p className="text-gray-400 text-sm font-light mb-4 line-clamp-2">{section.description}</p>
+                <p className="text-blue-100/50 text-sm font-light mb-4 line-clamp-2">{section.description}</p>
                 <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest">{allResources.length} Total Assets Inside</p>
               </div>
             </header>
@@ -1427,22 +1468,22 @@
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h3 className="serif text-2xl md:text-3xl text-white italic">Assets Directory</h3>
                 <div className="flex gap-3">
-                   <button onClick={() => setShowFolderModal(true)} className="flex-1 sm:flex-none px-6 py-4 glass text-gray-300 rounded-xl flex items-center justify-center gap-2 hover:text-white hover:border-[#D4AF37]/50 transition-all text-[10px] font-bold uppercase tracking-widest border border-white/10 shadow-lg">
+                   <button onClick={() => setShowFolderModal(true)} className="flex-1 sm:flex-none px-6 py-4 bg-[#0A1526]/60 text-blue-300 rounded-xl flex items-center justify-center gap-2 hover:text-[#D4AF37] hover:border-[#D4AF37]/50 transition-all text-[10px] font-bold uppercase tracking-widest border border-blue-800/40 shadow-lg">
                      <FolderPlus size={18} /> Folder
                    </button>
-                   <button onClick={() => setShowResourceModal(true)} className="flex-1 sm:flex-none px-6 py-4 bg-gradient-to-br from-[#D4AF37] to-[#B38D22] text-black rounded-xl flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg">
+                   <button onClick={() => setShowResourceModal(true)} className="flex-1 sm:flex-none px-6 py-4 bg-gradient-to-br from-blue-900 to-[#0A1526] text-[#D4AF37] rounded-xl flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(30,58,138,0.4)] transition-all text-[10px] font-bold uppercase tracking-widest border border-blue-500/50 shadow-lg">
                      <Plus size={18} /> Asset
                    </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 text-[10px] text-gray-400 uppercase tracking-widest font-bold bg-black/40 p-4 md:p-5 rounded-xl border border-white/5 overflow-x-auto custom-scrollbar">
+              <div className="flex items-center gap-3 text-[10px] text-blue-400/60 uppercase tracking-widest font-bold bg-[#0A1526]/40 p-4 md:p-5 rounded-xl border border-blue-900/40 overflow-x-auto custom-scrollbar">
                 <button onClick={() => setCurrentFolderId(null)} className="hover:text-white transition-colors flex items-center gap-2 shrink-0">
                   <FolderOpen size={16}/> Root
                 </button>
                 {breadcrumbs.map((f, i) => (
                   <React.Fragment key={f.id}>
-                    <ChevronRight size={14} className="text-[#D4AF37]/50 shrink-0" />
+                    <ChevronRight size={14} className="text-blue-800 shrink-0" />
                     <button onClick={() => openFolder(f.id)} className={`hover:text-white transition-colors break-words line-clamp-1 max-w-[150px] shrink-0 ${i === breadcrumbs.length-1 ? 'text-[#D4AF37]' : ''}`}>
                       {f.title}
                     </button>
@@ -1452,27 +1493,27 @@
 
               <div className="space-y-4">
                 {currentResources.length === 0 ? (
-                  <div className="glass-premium rounded-2xl md:rounded-[2rem] p-10 md:p-16 text-center text-gray-500 text-[10px] font-bold tracking-[0.2em] uppercase border border-white/5">Empty Location</div>
+                  <div className="bg-[#0A1526]/20 rounded-2xl md:rounded-[2rem] p-10 md:p-16 text-center text-blue-200/30 text-[10px] font-bold tracking-[0.2em] uppercase border border-blue-900/30">Empty Location</div>
                 ) : (
                   currentResources.sort((a,b) => (b.isFolder ? 1 : 0) - (a.isFolder ? 1 : 0)).map(r => (
-                    <div key={r.id} onClick={() => r.isFolder ? openFolder(r.id) : null} className={`glass p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between group hover-lift border border-white/5 hover:border-[#D4AF37]/30 transition-all ${r.isFolder ? 'cursor-pointer' : ''}`}>
+                    <div key={r.id} onClick={() => r.isFolder ? openFolder(r.id) : null} className={`bg-[#0A1526]/40 p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between group hover-lift border border-blue-900/40 hover:border-blue-500/50 transition-all ${r.isFolder ? 'cursor-pointer' : ''}`}>
                       <div className="flex items-center gap-4 pr-3 overflow-hidden w-full mb-3 sm:mb-0">
                         {r.thumbnailUrl ? (
-                           <img src={r.thumbnailUrl} className="w-16 h-10 object-cover rounded bg-[#111] shrink-0" />
+                           <img src={r.thumbnailUrl} className="w-16 h-10 object-cover rounded bg-[#020813] shrink-0" />
                         ) : (
-                           <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border border-white/10 shadow-inner ${r.isFolder ? 'bg-gradient-to-br from-[#D4AF37]/20 to-black text-[#D4AF37]' : 'bg-gradient-to-br from-gray-800 to-black text-gray-400 group-hover:text-white'}`}>
-                              {r.isFolder ? <Folder size={20} className="fill-[#D4AF37]/20"/> : <FileText size={20}/>}
+                           <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border border-blue-800/40 shadow-inner ${r.isFolder ? 'bg-gradient-to-br from-[#0A1526] to-[#020813] text-[#D4AF37]' : 'bg-gradient-to-br from-blue-900/30 to-[#020813] text-blue-400 group-hover:text-white'}`}>
+                             {r.isFolder ? <Folder size={20} className="fill-[#D4AF37]/20"/> : <FileText size={20}/>}
                            </div>
                         )}
                         <div className="flex-1 min-w-0">
                           <h4 className="text-white text-sm font-bold tracking-wide mb-1 break-words line-clamp-2">{r.title}</h4>
                           <div className="flex items-center gap-2 flex-wrap">
-                             <span className="text-[#D4AF37] opacity-80 text-[9px] uppercase tracking-widest font-bold">{r.isFolder ? 'Folder' : r.type}</span>
+                             <span className="text-blue-300/80 text-[9px] uppercase tracking-widest font-bold">{r.isFolder ? 'Folder' : r.type}</span>
                              {r.isPremium && <span className="bg-[#D4AF37]/20 border border-[#D4AF37]/30 text-[#D4AF37] px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest flex items-center gap-1"><Crown size={10}/> Premium</span>}
                           </div>
                         </div>
                       </div>
-                      <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeResource(r.id); }} className="w-full sm:w-auto text-gray-500 hover:text-red-400 p-3 rounded-xl hover:bg-red-500/10 transition-colors bg-black/40 border border-white/5 sm:border-transparent flex items-center justify-center">
+                      <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeResource(r.id); }} className="w-full sm:w-auto text-blue-400/60 hover:text-red-400 p-3 rounded-xl hover:bg-red-500/10 transition-colors bg-[#020813]/60 border border-blue-900/30 sm:border-transparent flex items-center justify-center">
                          <Trash2 size={18} className="sm:mr-0 mr-2" /> <span className="sm:hidden text-xs font-bold uppercase tracking-widest">Delete</span>
                       </button>
                     </div>
@@ -1976,21 +2017,21 @@
       const myCourses = courses.filter(c => userData.enrolledCourses?.includes(c.id));
 
       const openCourse = (id) => {
-         window.history.pushState({ internalNav: true }, "");
-         setActiveCourseId(id);
+          window.history.pushState({ internalNav: true }, "");
+          setActiveCourseId(id);
       }
       
       const handleViewResource = (res) => {
-         if (res.type === 'link') {
+          if (res.type === 'link') {
             window.open(res.url, '_blank');
             return;
-         }
-         window.history.pushState({ internalNav: true }, "");
-         setPreviewResource(res);
+          }
+          window.history.pushState({ internalNav: true }, "");
+          setPreviewResource(res);
       }
 
       if (previewResource && activeCourse) {
-         return <ResourcePreviewer resource={previewResource} course={activeCourse} userData={userData} onClose={() => window.history.back()} />;
+          return <ResourcePreviewer resource={previewResource} course={activeCourse} userData={userData} onClose={() => window.history.back()} />;
       }
 
       if (activeCourse) {
@@ -2092,12 +2133,12 @@
       const taughtCourses = courses.filter(c => userData.enrolledCourses?.includes(c.id));
 
       const handleOpenCourse = (id) => {
-         window.history.pushState({ internalNav: true }, "");
-         setActiveCourseId(id);
+          window.history.pushState({ internalNav: true }, "");
+          setActiveCourseId(id);
       };
 
       if (activeCourse) {
-         return <AdminCourseEditor course={activeCourse} userData={userData} onBack={() => window.history.back()} showConfirm={showConfirm} />;
+          return <AdminCourseEditor course={activeCourse} userData={userData} onBack={() => window.history.back()} showConfirm={showConfirm} />;
       }
 
       return (
@@ -2149,8 +2190,8 @@
       const managingCourse = courses.find(c => c.id === managingCourseId);
 
       const handleOpenCourse = (id) => {
-         window.history.pushState({ internalNav: true }, "");
-         setManagingCourseId(id);
+          window.history.pushState({ internalNav: true }, "");
+          setManagingCourseId(id);
       }
 
       const createCourse = async (e) => {
@@ -2249,17 +2290,17 @@
       });
 
       const openFolder = (id) => {
-         window.history.pushState({ internalNav: true }, "");
-         setCurrentFolderId(id);
+          window.history.pushState({ internalNav: true }, "");
+          setCurrentFolderId(id);
       };
 
       const handleViewResource = (res) => {
-         if (res.type === 'link') {
+          if (res.type === 'link') {
             window.open(res.url, '_blank');
             return;
-         }
-         window.history.pushState({ internalNav: true }, "");
-         setPreviewResource(res);
+          }
+          window.history.pushState({ internalNav: true }, "");
+          setPreviewResource(res);
       };
 
       const removeResource = async (resId) => {
@@ -2291,7 +2332,7 @@
       const breadcrumbs = buildBreadcrumbs(currentFolderId, allResources);
 
       if (previewResource) {
-         return <ResourcePreviewer resource={previewResource} course={course} userData={userData} onClose={() => window.history.back()} showConfirm={showConfirm} />;
+          return <ResourcePreviewer resource={previewResource} course={course} userData={userData} onClose={() => window.history.back()} showConfirm={showConfirm} />;
       }
 
       return (
@@ -2420,8 +2461,8 @@
       });
 
       const openFolder = (id) => {
-         window.history.pushState({ internalNav: true }, "");
-         setCurrentFolderId(id);
+          window.history.pushState({ internalNav: true }, "");
+          setCurrentFolderId(id);
       };
 
       const myAttendance = course.attendance?.filter(a => a.userId === userData.id) || [];
@@ -2580,8 +2621,8 @@
       useHardwareBack(!!viewingAttachment, () => setViewingAttachment(null));
 
       const handleOpenAttachment = (att) => {
-         window.history.pushState({ internalNav: true }, "");
-         setViewingAttachment(att);
+          window.history.pushState({ internalNav: true }, "");
+          setViewingAttachment(att);
       }
 
       if (isLessonView) {
@@ -2627,9 +2668,8 @@
           </div>
 
           <div className="flex flex-col lg:flex-row flex-1 overflow-hidden lg:mx-8 lg:mb-8 lg:glass-premium lg:rounded-[3rem] lg:border border-[#D4AF37]/20 lg:shadow-2xl">
-            {/* Top/Left: Video Player Area - Robust Aspect Ratio implementation */}
+            {/* Top/Left: Video Player Area */}
             <div className="w-full lg:w-[65%] xl:w-[70%] bg-black relative flex flex-col shrink-0 border-b lg:border-b-0 lg:border-r border-white/10 z-10 lg:min-h-[500px]">
-              {/* Force 16:9 on mobile, flex fill on desktop */}
               <div className="relative w-full aspect-video lg:aspect-auto lg:h-full lg:flex-1">
                 {resource.type === 'youtube' ? (
                   <iframe
@@ -2657,9 +2697,9 @@
                  <button onClick={() => setActiveTab('overview')} className={`flex-1 py-5 text-xs md:text-[11px] font-bold uppercase tracking-widest transition-all ${activeTab === 'overview' ? 'text-[#D4AF37] border-b-[4px] border-[#D4AF37] bg-white/5' : 'text-gray-500 hover:text-gray-300'}`}>
                    Info
                  </button>
-                 {course?.id && ( // Only show attachments if in a course context, not library general
+                 {course?.id && (
                    <button onClick={() => setActiveTab('attachments')} className={`flex-1 py-5 text-xs md:text-[11px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'attachments' ? 'text-[#D4AF37] border-b-[4px] border-[#D4AF37] bg-white/5' : 'text-gray-500 hover:text-gray-300'}`}>
-                     Notes ({attachments.length})
+                      Notes ({attachments.length})
                    </button>
                  )}
                </div>
@@ -2716,11 +2756,11 @@
                                 </div>
                               </div>
                               {isTeacher ? (
-                                 <button onClick={(e) => deleteAttachment(att.id, e)} className="text-gray-600 hover:text-red-400 p-2.5 rounded-lg hover:bg-red-500/10 transition-colors shrink-0 ml-2">
-                                   <Trash2 size={18} />
-                                 </button>
+                                  <button onClick={(e) => deleteAttachment(att.id, e)} className="text-gray-600 hover:text-red-400 p-2.5 rounded-lg hover:bg-red-500/10 transition-colors shrink-0 ml-2">
+                                    <Trash2 size={18} />
+                                  </button>
                               ) : (
-                                 <ChevronRight size={20} className="text-gray-600 group-hover:text-white transition-colors shrink-0 ml-2" />
+                                  <ChevronRight size={20} className="text-gray-600 group-hover:text-white transition-colors shrink-0 ml-2" />
                               )}
                            </div>
                          ))
@@ -2800,13 +2840,13 @@
       useHardwareBack(!!selectedLectureId, () => setSelectedLectureId(null));
 
       const handleOpenCourse = (id) => {
-         window.history.pushState({ internalNav: true }, "");
-         setSelectedCourseId(id);
+          window.history.pushState({ internalNav: true }, "");
+          setSelectedCourseId(id);
       }
       
       const handleOpenLecture = (id) => {
-         window.history.pushState({ internalNav: true }, "");
-         setSelectedLectureId(id);
+          window.history.pushState({ internalNav: true }, "");
+          setSelectedLectureId(id);
       }
 
       const activeCourse = courses.find(c => c.id === selectedCourseId);
