@@ -62,6 +62,9 @@
     ::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.2); border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(212, 175, 55, 0.4); }
 
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
     input[type="file"]::file-selector-button {
       border: 1px solid rgba(212, 175, 55, 0.3);
       background: transparent;
@@ -96,6 +99,16 @@
       box-shadow: 0 20px 40px -10px rgba(212, 175, 55, 0.15);
     }
 
+    /* Netflix Style specific hover */
+    .netflix-card {
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .netflix-card:hover {
+      transform: scale(1.05);
+      z-index: 40;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.8);
+    }
+
     /* Fixed Google Translate Custom Styling & Mobile Fixes */
     .goog-te-gadget { font-family: 'Inter', 'Mukta', sans-serif !important; color: transparent !important; font-size: 0 !important; }
     .goog-te-gadget > span { display: none !important; }
@@ -107,13 +120,11 @@
       background-repeat: no-repeat; background-position: right 14px top 50%; background-size: 12px auto;
     }
     
-    /* Adjusted translated text to be cleaner and not overly large */
     html.translated-ltr font, html.translated-rtl font { 
         font-size: 105% !important; 
         line-height: 1.5 !important; 
     }
     
-    /* Give buttons more breathing room when translated */
     html.translated-ltr button, html.translated-rtl button, 
     html.translated-ltr a, html.translated-rtl a { 
         padding-top: 0.75rem; 
@@ -138,7 +149,7 @@
       LayoutDashboard, BookOpen, Users, Settings, LogOut, Plus, Trash2, Calendar, FileText, PlayCircle, 
       Image as ImageIcon, ChevronRight, GraduationCap, Music, Link as LinkIcon, Menu, X, Mail, Lock, 
       User as UserIcon, UploadCloud, File as FileIcon, ImagePlus, Clock, Folder, FolderPlus, ChevronLeft,
-      FolderOpen, AlertCircle, Edit3, Paperclip, Video
+      FolderOpen, AlertCircle, Edit3, Paperclip, Video, Film, Crown, Search, Filter, Home, Info, Play
     } from 'lucide-react';
     
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
@@ -303,7 +314,6 @@
            googleSelect.dispatchEvent(new Event('change', { bubbles: true }));
         }
 
-        // Automatic reload to ensure layout and translated text render flawlessly immediately
         setTimeout(() => {
            window.location.reload();
         }, 250);
@@ -401,6 +411,22 @@
         );
     }
 
+    function SidebarItem({ icon, label, active, onClick }) {
+      return (
+        <button 
+          onClick={onClick} 
+          className={`w-full flex items-center gap-3 md:gap-4 p-3 md:p-5 rounded-xl md:rounded-2xl transition-all duration-300 group ${
+            active 
+              ? 'bg-white/10 text-[#D4AF37] border border-white/10 shadow-[0_0_20px_rgba(212,175,55,0.15)]' 
+              : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+          }`}
+        >
+          <span className={active ? 'text-[#D4AF37]' : 'group-hover:text-white transition-colors'}>{icon}</span>
+          <span className="text-[10px] md:text-[11px] font-bold uppercase tracking-widest">{label}</span>
+        </button>
+      );
+    }
+
     function App() {
       const [user, setUser] = useState(null);
       const [userData, setUserData] = useState(null);
@@ -408,6 +434,7 @@
       
       const [allUsers, setAllUsers] = useState([]);
       const [allCourses, setAllCourses] = useState([]);
+      const [allLibrary, setAllLibrary] = useState([]);
 
       useEffect(() => {
         try { getAnalytics(app); } catch (e) {}
@@ -433,10 +460,11 @@
                 if (profileSnap.exists()) {
                   setUserData(profileSnap.data());
                 } else {
+                  // Default role is now 'user' instead of 'student'
                   const fallbackProfile = {
                     name: u.displayName || "Scholar",
                     email: u.email || '',
-                    roles: [u.email?.toLowerCase() === 'chandrashekharkolhe7@gmail.com' ? 'admin' : 'student'],
+                    roles: [u.email?.toLowerCase() === 'chandrashekharkolhe7@gmail.com' ? 'admin' : 'user'],
                     enrolledCourses: [],
                     createdAt: new Date().toISOString()
                   };
@@ -453,7 +481,7 @@
                 setUserData({
                   name: u.displayName || "Scholar",
                   email: u.email || '',
-                  roles: [u.email?.toLowerCase() === 'chandrashekharkolhe7@gmail.com' ? 'admin' : 'student'], 
+                  roles: [u.email?.toLowerCase() === 'chandrashekharkolhe7@gmail.com' ? 'admin' : 'user'], 
                   enrolledCourses: [],
                   createdAt: new Date().toISOString()
                 });
@@ -476,6 +504,7 @@
 
         const qUsers = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
         const qCourses = query(collection(db, 'artifacts', appId, 'public', 'data', 'courses'));
+        const qLibrary = query(collection(db, 'artifacts', appId, 'public', 'data', 'library'));
 
         const unsubUsers = onSnapshot(qUsers, 
           (snap) => setAllUsers(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
@@ -486,8 +515,13 @@
           (snap) => setAllCourses(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
           (error) => console.error("Courses snapshot error:", error)
         );
+        
+        const unsubLibrary = onSnapshot(qLibrary, 
+          (snap) => setAllLibrary(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+          (error) => console.error("Library snapshot error:", error)
+        );
 
-        return () => { unsubUsers(); unsubCourses(); };
+        return () => { unsubUsers(); unsubCourses(); unsubLibrary(); };
       }, [user, userData]);
 
       const logout = () => signOut(auth);
@@ -514,6 +548,7 @@
               setUserData={setUserData}
               allUsers={allUsers} 
               allCourses={allCourses} 
+              allLibrary={allLibrary}
               logout={logout}
               updateLocalRole={(newRole) => setUserData({...userData, roles: [newRole]})}
             />
@@ -539,7 +574,7 @@
             toast("Welcome Back");
           } else {
             const cred = await createUserWithEmailAndPassword(auth, email, password);
-            const initialRole = (email.toLowerCase() === 'chandrashekharkolhe7@gmail.com') ? 'admin' : 'student';
+            const initialRole = (email.toLowerCase() === 'chandrashekharkolhe7@gmail.com') ? 'admin' : 'user'; 
 
             const newProfile = {
               name: name,
@@ -619,11 +654,12 @@
       );
     }
 
-    function MainApplication({ user, userData, setUserData, allUsers, allCourses, logout, updateLocalRole }) {
-      const [activeTab, setActiveTab] = useState('dashboard');
+    function MainApplication({ user, userData, setUserData, allUsers, allCourses, allLibrary, logout, updateLocalRole }) {
+      const role = userData.roles[0] || 'user';
+      const defaultTab = role === 'user' ? 'home' : 'dashboard';
+      const [activeTab, setActiveTab] = useState(defaultTab);
       const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
       const [confirmState, setConfirmState] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
-      const role = userData.roles[0] || 'student';
 
       useEffect(() => {
         const handlePopState = () => {
@@ -648,7 +684,7 @@
         <div className="flex flex-col lg:flex-row w-full h-screen overflow-hidden bg-app">
           <GoogleTranslateWidget />
 
-          {/* MOBILE HEADER - Redesigned to be smaller */}
+          {/* MOBILE HEADER */}
           <div className="lg:hidden flex items-center justify-between p-3 md:p-5 border-b border-[#D4AF37]/20 glass-premium z-40 sticky top-0 shadow-lg min-h-[56px]">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 flex items-center justify-center overflow-hidden shrink-0">
@@ -668,7 +704,7 @@
             <div className="fixed inset-0 bg-black/80 z-40 lg:hidden backdrop-blur-md" onClick={() => setIsMobileMenuOpen(false)} />
           )}
 
-          {/* SIDEBAR - Compact navigation on mobile */}
+          {/* SIDEBAR */}
           <aside className={`fixed inset-y-0 left-0 z-50 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition-transform duration-300 w-[260px] lg:w-80 border-r border-white/5 glass flex flex-col p-4 lg:p-6 shadow-[20px_0_50px_rgba(0,0,0,0.5)] lg:shadow-none`}>
             <div className="hidden lg:flex items-center gap-5 mb-12 px-2">
               <div className="w-16 h-16 flex items-center justify-center shrink-0 overflow-hidden">
@@ -681,6 +717,19 @@
             </div>
 
             <nav className="flex-1 space-y-2 lg:space-y-3 overflow-y-auto pr-2 lg:pr-3 custom-scrollbar">
+              
+              {role === 'user' && (
+                <SidebarItem icon={<Home size={20} className="lg:w-[22px] lg:h-[22px]" />} label="Home" active={activeTab === 'home'} onClick={() => handleTabChange('home')} />
+              )}
+
+              <SidebarItem icon={<Film size={20} className="lg:w-[22px] lg:h-[22px]" />} label="M-Library" active={activeTab === 'm-library'} onClick={() => handleTabChange('m-library')} />
+
+              {role === 'user' && (
+                 <div className="mt-4 mb-4 glass p-4 rounded-xl border-white/5 shadow-inner">
+                    <p className="text-gray-400 text-[10px] font-bold tracking-widest uppercase text-center">Enroll in a course to unlock your Dashboard.</p>
+                 </div>
+              )}
+
               {role === 'student' && (
                 <SidebarItem icon={<LayoutDashboard size={20} className="lg:w-[22px] lg:h-[22px]" />} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => handleTabChange('dashboard')} />
               )}
@@ -711,11 +760,11 @@
                 <p className="text-[10px] text-[#D4AF37] uppercase tracking-widest mb-3 lg:mb-4 font-bold flex items-center gap-2">
                   <Settings size={16} className="lg:w-[18px] lg:h-[18px]" /> View As
                 </p>
-                <div className="flex gap-2 bg-black/60 p-2 rounded-lg lg:rounded-xl">
-                  {['student', 'teacher', 'admin'].map(r => (
+                <div className="flex flex-wrap gap-2 bg-black/60 p-2 rounded-lg lg:rounded-xl">
+                  {['user', 'student', 'teacher', 'admin'].map(r => (
                     <button 
                       key={r} onClick={() => updateLocalRole(r)}
-                      className={`flex-1 py-2 lg:py-3 rounded-md lg:rounded-lg text-[9px] tracking-wider font-bold transition-all uppercase ${role === r ? 'bg-[#D4AF37] text-black shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                      className={`flex-1 min-w-[40%] py-2 rounded-md text-[9px] tracking-wider font-bold transition-all uppercase ${role === r ? 'bg-[#D4AF37] text-black shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                     >
                       {r.substring(0,3)}
                     </button>
@@ -737,8 +786,13 @@
           </aside>
 
           {/* MAIN CONTENT AREA */}
-          <main className="flex-1 overflow-y-auto relative w-full h-full pb-8 lg:pb-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-black via-[#050505] to-[#050505]">
-            <div className="p-5 sm:p-8 md:p-12 pb-32 sm:pb-32 md:pb-32 w-full max-w-7xl mx-auto min-h-full">
+          <main className={`flex-1 overflow-y-auto relative w-full h-full pb-8 lg:pb-0 ${activeTab === 'm-library' || activeTab === 'home' ? 'bg-[#050505]' : 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-black via-[#050505] to-[#050505]'}`}>
+            <div className={`w-full min-h-full ${activeTab === 'm-library' || activeTab === 'home' ? 'pb-32' : 'p-5 sm:p-8 md:p-12 pb-32 max-w-7xl mx-auto'}`}>
+              
+              {activeTab === 'home' && <UserHome user={user} userData={userData} courses={allCourses} onGoToLibrary={() => handleTabChange('m-library')} />}
+              
+              {activeTab === 'm-library' && <MLibrary user={user} userData={userData} allLibrary={allLibrary} showConfirm={showConfirm} />}
+
               {(role === 'student' || role === 'admin') && activeTab === 'dashboard' && <StudentDashboard user={user} userData={userData} courses={allCourses} />}
               {role === 'teacher' && activeTab === 'dashboard' && <TeacherDashboard user={user} userData={userData} courses={allCourses} users={allUsers} showConfirm={showConfirm} />}
               {role === 'teacher' && activeTab === 'attendance' && <TeacherAttendance user={user} userData={userData} courses={allCourses} users={allUsers} isAdmin={false} showConfirm={showConfirm} />}
@@ -767,25 +821,1108 @@
       );
     }
 
-    function SidebarItem({ icon, label, active, onClick }) {
+    // ==========================================
+    // USER HOME (New Feature)
+    // ==========================================
+    function UserHome({ user, userData, courses, onGoToLibrary }) {
       return (
-        <button 
-          onClick={onClick} 
-          className={`w-full flex items-center gap-3 md:gap-4 p-3 md:p-5 rounded-xl md:rounded-2xl transition-all duration-300 group ${
-            active 
-              ? 'bg-white/10 text-[#D4AF37] border border-white/10 shadow-[0_0_20px_rgba(212,175,55,0.15)]' 
-              : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
-          }`}
-        >
-          <span className={active ? 'text-[#D4AF37]' : 'group-hover:text-white transition-colors'}>{icon}</span>
-          <span className="text-[10px] md:text-[11px] font-bold uppercase tracking-widest">{label}</span>
-        </button>
+        <div className="animate-in fade-in duration-1000 w-full min-h-full text-white bg-[#050505]">
+          
+          {/* Welcome Hero Banner */}
+          <div className="relative w-full h-[60vh] md:h-[70vh] mb-12 flex items-center justify-center overflow-hidden shadow-2xl group border-b border-white/5">
+             <div className="absolute inset-0 z-0">
+               <img src="Assets/Images/Logo.png" className="w-full h-full object-contain opacity-[0.03] scale-110 group-hover:scale-100 transition-transform duration-[20s]" />
+               <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-[#050505]"></div>
+             </div>
+             
+             <div className="relative z-10 text-center px-6 max-w-4xl mx-auto flex flex-col items-center">
+                <Crown size={48} className="text-[#D4AF37] mb-6 opacity-80" />
+                <h1 className="serif text-5xl md:text-7xl lg:text-8xl mb-6 leading-tight text-white drop-shadow-2xl">
+                   Welcome to <br/> <span className="gold-gradient-text italic">Musicoul</span>
+                </h1>
+                <p className="text-gray-300 text-sm md:text-base font-light max-w-2xl mx-auto mb-10 leading-relaxed drop-shadow-md">
+                   Discover our premium conservatory portal. Explore specialized courses or browse the M-Library for exclusive content.
+                </p>
+                <button onClick={onGoToLibrary} className="bg-gradient-to-br from-[#D4AF37] to-[#B38D22] text-black px-10 py-5 rounded-full text-sm font-bold uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_10px_30px_rgba(212,175,55,0.3)] flex items-center gap-3">
+                   <Film size={20} /> Enter M-Library
+                </button>
+             </div>
+          </div>
+
+          {/* Public Course Catalog */}
+          <div className="px-6 md:px-12 pb-24 max-w-7xl mx-auto">
+             <div className="mb-10 flex items-center gap-5 md:gap-8">
+               <h3 className="serif text-3xl md:text-4xl gold-gradient-text italic font-bold">Course Catalog</h3>
+               <div className="h-[2px] flex-1 bg-gradient-to-r from-[#D4AF37]/50 to-transparent"></div>
+             </div>
+             
+             {courses.length === 0 ? (
+                <div className="text-center text-gray-500 font-bold uppercase tracking-widest text-xs p-10 glass-premium rounded-3xl">No courses publicly listed yet.</div>
+             ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
+                   {courses.map(course => (
+                     <div key={course.id} className="glass-premium rounded-[2rem] p-6 md:p-10 text-left relative overflow-hidden flex flex-col min-h-[300px] border border-[#D4AF37]/20 hover:border-[#D4AF37]/50 transition-colors shadow-xl group">
+                       {course.coverImage && (
+                         <div className="absolute inset-0 z-0">
+                           <img src={course.coverImage} className="w-full h-full object-cover opacity-[0.15] group-hover:opacity-[0.25] transition-opacity duration-500" />
+                           <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-[#050505]/40"></div>
+                         </div>
+                       )}
+                       
+                       <div className="relative z-10 flex-1 flex flex-col h-full">
+                         <div className="w-12 h-12 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center mb-6 text-[#D4AF37] shadow-inner backdrop-blur-md shrink-0">
+                           <Music size={24} />
+                         </div>
+                         
+                         <h4 className="serif text-2xl md:text-3xl mb-3 text-white leading-tight font-bold break-words line-clamp-2">{course.title}</h4>
+                         <p className="text-gray-300 text-xs md:text-sm mb-8 line-clamp-3 font-medium leading-relaxed">{course.desc}</p>
+                         
+                         <div className="mt-auto">
+                           <span className="text-gray-400 text-[10px] uppercase tracking-widest font-bold bg-black/50 px-4 py-2 rounded-lg border border-white/5">
+                             Enroll via Admin
+                           </span>
+                         </div>
+                       </div>
+                     </div>
+                   ))}
+                </div>
+             )}
+          </div>
+        </div>
       );
     }
 
     // ==========================================
-    // SCHEDULE COMPONENT (Shared Premium Card)
+    // M-LIBRARY (Ultra Premium Netflix Interface)
     // ==========================================
+    function MLibrary({ user, userData, allLibrary, showConfirm }) {
+      const isAdmin = userData.roles?.includes('admin');
+      const isPrivileged = userData.roles?.some(r => ['admin', 'teacher', 'student'].includes(r));
+      const [mode, setMode] = useState('browse'); // browse | manage
+      const [activeSectionId, setActiveSectionId] = useState(null); // Used for both Manage and Detail view
+      const [activeFolderId, setActiveFolderId] = useState(null);
+      const [previewResource, setPreviewResource] = useState(null);
+      
+      const [hoveredSection, setHoveredSection] = useState(null); // For dynamic Hero in Browse mode
+
+      useHardwareBack(!!activeSectionId && mode === 'manage', () => setActiveSectionId(null));
+      useHardwareBack(!!activeSectionId && mode === 'browse', () => setActiveSectionId(null));
+      useHardwareBack(!!activeFolderId && mode === 'browse', () => setActiveFolderId(null));
+      useHardwareBack(!!previewResource, () => setPreviewResource(null));
+
+      const handleViewResource = (res) => {
+         if (res.isPremium && !isPrivileged) {
+            toast("Premium Content: Please enroll in a course to unlock this material.");
+            return;
+         }
+         if (res.type === 'link') {
+            window.open(res.url, '_blank');
+            return;
+         }
+         window.history.pushState({ internalNav: true }, "");
+         setPreviewResource(res);
+      };
+
+      const handleOpenFolder = (folderId) => {
+         window.history.pushState({ internalNav: true }, "");
+         setActiveFolderId(folderId);
+      };
+
+      const handleOpenSectionDetail = (sectionId) => {
+         window.history.pushState({ internalNav: true }, "");
+         setActiveSectionId(sectionId);
+      };
+
+      if (previewResource) {
+         return <ResourcePreviewer resource={previewResource} course={{resources: []}} userData={userData} onClose={() => window.history.back()} />;
+      }
+
+      if (mode === 'manage' && isAdmin) {
+         if (activeSectionId) {
+            const section = allLibrary.find(s => s.id === activeSectionId);
+            return <LibrarySectionEditor section={section} onBack={() => window.history.back()} showConfirm={showConfirm} />;
+         }
+         return <LibraryAdminManager allLibrary={allLibrary} onOpenSection={(id) => { window.history.pushState({ internalNav: true }, ""); setActiveSectionId(id); }} onBackToBrowse={() => setMode('browse')} showConfirm={showConfirm} />;
+      }
+
+      // --- Section Detail View (Netflix Series Page) ---
+      if (activeSectionId && mode === 'browse') {
+         const section = allLibrary.find(s => s.id === activeSectionId);
+         if (section) {
+            if (activeFolderId) {
+                return <LibraryFolderView section={section} folderId={activeFolderId} onBack={() => window.history.back()} onViewResource={handleViewResource} onOpenFolder={handleOpenFolder} isPrivileged={isPrivileged} />;
+            }
+            return <LibrarySectionDetailView section={section} onBack={() => window.history.back()} onViewResource={handleViewResource} onOpenFolder={handleOpenFolder} isPrivileged={isPrivileged} />;
+         }
+      }
+
+      // --- Browse Mode (Netflix UI) ---
+      
+      // Determine the Hero Section. 
+      // If a user hovers over a row that has a coverUrl, use that. Otherwise use the newest featured section.
+      let featuredSections = allLibrary.filter(s => s.coverUrl || s.thumbnailUrl);
+      featuredSections.sort((a,b) => (a.createdAt > b.createdAt ? -1 : 1));
+      
+      let displayHeroSection = hoveredSection || (featuredSections.length > 0 ? featuredSections[0] : null);
+
+      return (
+        <div className="animate-in fade-in duration-1000 w-full min-h-full text-white bg-[#050505]">
+          
+          {/* Top Admin Toggle */}
+          {isAdmin && (
+             <div className="absolute top-4 right-4 md:top-8 md:right-8 z-50">
+                <button onClick={() => setMode('manage')} className="bg-[#D4AF37]/20 border border-[#D4AF37]/50 text-[#D4AF37] px-5 py-2.5 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest backdrop-blur-md hover:bg-[#D4AF37] hover:text-black transition-all shadow-[0_0_20px_rgba(212,175,55,0.2)] flex items-center gap-2">
+                   <Settings size={16} /> Manage Library
+                </button>
+             </div>
+          )}
+
+          {/* Dynamic Hero Section */}
+          <div className="relative w-full h-[70vh] md:h-[85vh] mb-12 flex items-end shadow-2xl overflow-hidden bg-black group transition-all duration-700">
+             {displayHeroSection ? (
+                <>
+                  <div className="absolute inset-0 z-0 bg-[#050505]">
+                      <img 
+                        key={displayHeroSection.id} // Forces re-render for fade animation
+                        src={displayHeroSection.coverUrl || displayHeroSection.thumbnailUrl} 
+                        className="w-full h-full object-cover opacity-60 mix-blend-screen scale-105 group-hover:scale-100 transition-transform duration-[20s] animate-in fade-in zoom-in-105" 
+                      />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent z-10"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/90 via-[#050505]/40 to-transparent z-10"></div>
+                  <div className="relative z-20 p-6 md:p-16 max-w-4xl animate-in slide-in-from-bottom-10 fade-in duration-700">
+                      <div className="flex items-center gap-3 mb-4">
+                         <span className="text-red-600 text-[10px] md:text-xs font-black tracking-[0.3em] uppercase drop-shadow-md">N-SERIES</span>
+                         <span className="text-[#D4AF37] text-[10px] md:text-xs font-bold tracking-widest uppercase border border-[#D4AF37]/30 bg-black/50 px-3 py-1 rounded backdrop-blur-md">Featured Section</span>
+                      </div>
+                      <h1 className="serif text-6xl md:text-8xl lg:text-[7rem] mb-4 leading-none text-white drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] line-clamp-2">{displayHeroSection.title}</h1>
+                      <p className="text-gray-200 text-sm md:text-lg mb-8 line-clamp-3 font-light max-w-2xl drop-shadow-xl leading-relaxed">
+                         {displayHeroSection.description || "Explore this premium curated collection of masterclasses and conservatory assets."}
+                      </p>
+                      <div className="flex items-center gap-4">
+                        <button onClick={() => handleOpenSectionDetail(displayHeroSection.id)} className="bg-white text-black hover:bg-gray-200 px-8 py-3.5 md:py-4 rounded-lg text-sm md:text-base font-bold transition-all flex items-center gap-3 active:scale-95 shadow-xl">
+                           <Play fill="currentColor" size={24} /> Play / Open
+                        </button>
+                        <button onClick={() => handleOpenSectionDetail(displayHeroSection.id)} className="bg-white/20 text-white hover:bg-white/30 px-8 py-3.5 md:py-4 rounded-lg text-sm md:text-base font-bold transition-all flex items-center gap-3 active:scale-95 backdrop-blur-md border border-white/10 shadow-xl">
+                           <Info size={24} /> More Info
+                        </button>
+                      </div>
+                  </div>
+                </>
+             ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#111] to-[#050505] z-10 border-b border-white/5">
+                   <Film size={64} className="text-[#D4AF37] opacity-30 mb-6" />
+                   <h1 className="serif text-5xl md:text-6xl text-white mb-4">M-Library</h1>
+                   <p className="text-gray-400 tracking-widest uppercase font-bold text-xs">Curated Conservatory Content</p>
+                </div>
+             )}
+          </div>
+
+          {/* Netflix-Style Scrolling Rows */}
+          <div className="pb-20 space-y-12 md:space-y-16 mt-[-4rem] relative z-30">
+             {allLibrary.length === 0 ? (
+                <div className="text-center text-gray-500 font-bold uppercase tracking-widest text-xs p-10">No collections available yet.</div>
+             ) : (
+                allLibrary.sort((a,b) => (a.createdAt > b.createdAt ? -1 : 1)).map(section => {
+                   const rootItems = (section.resources || []).filter(r => r.parentId === null);
+                   if (rootItems.length === 0) return null;
+
+                   return (
+                     <div key={section.id} className="w-full relative" onMouseEnter={() => setHoveredSection(section)}>
+                        <div className="flex items-center justify-between px-6 md:px-16 mb-4 md:mb-5 group/header cursor-pointer" onClick={() => handleOpenSectionDetail(section.id)}>
+                           <div className="flex items-center gap-3">
+                              <h3 className="text-xl md:text-2xl font-bold text-gray-200 group-hover/header:text-white transition-colors">{section.title}</h3>
+                              <div className="opacity-0 group-hover/header:opacity-100 transition-all flex items-center gap-1 text-[#D4AF37] text-[10px] font-bold tracking-widest uppercase translate-x-[-10px] group-hover/header:translate-x-0">
+                                 Explore All <ChevronRight size={16}/>
+                              </div>
+                           </div>
+                        </div>
+                        
+                        <div className="flex overflow-x-auto gap-3 md:gap-4 px-6 md:px-16 pb-8 pt-4 hide-scrollbar snap-x snap-mandatory">
+                           {rootItems.sort((a,b) => (b.isFolder ? 1 : 0) - (a.isFolder ? 1 : 0)).map(item => (
+                              <div 
+                                key={item.id} 
+                                onClick={() => item.isFolder ? handleOpenFolder(item.id) : handleViewResource(item)}
+                                className="netflix-card min-w-[160px] md:min-w-[240px] aspect-[16/9] bg-[#111] rounded-md relative overflow-hidden border border-white/10 cursor-pointer snap-start shrink-0 block"
+                              >
+                                 <img src={item.thumbnailUrl || section.thumbnailUrl || section.coverUrl || 'Assets/Images/Logo.png'} className={`w-full h-full object-cover transition-transform duration-700 ${!item.thumbnailUrl && !section.thumbnailUrl && !section.coverUrl ? 'opacity-20 p-8 object-contain' : 'opacity-80'}`} />
+                                 
+                                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent opacity-90"></div>
+                                 
+                                 {/* Hover Info overlay inside card */}
+                                 <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 backdrop-blur-[2px] z-10">
+                                    <div className="flex items-center gap-3 mb-2">
+                                       <button className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center hover:bg-[#D4AF37] transition-colors"><Play fill="currentColor" size={14}/></button>
+                                       {item.isFolder && <button className="w-8 h-8 bg-black/50 border border-white/50 text-white rounded-full flex items-center justify-center"><FolderOpen size={14}/></button>}
+                                    </div>
+                                    <h4 className="text-white font-bold text-sm md:text-sm truncate drop-shadow-md">{item.title}</h4>
+                                    <p className="text-[#D4AF37] text-[8px] md:text-[9px] uppercase tracking-widest font-bold mt-1 flex items-center gap-1">
+                                       {item.isPremium && <Crown size={10}/>} {item.isFolder ? 'Collection' : item.type}
+                                    </p>
+                                 </div>
+
+                                 {/* Static title if no hover */}
+                                 <div className="absolute bottom-0 left-0 w-full p-3 z-0 pointer-events-none bg-gradient-to-t from-black to-transparent">
+                                    <h4 className="text-white font-medium text-xs md:text-sm truncate drop-shadow-md">{item.title}</h4>
+                                 </div>
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+                   );
+                })
+             )}
+          </div>
+        </div>
+      );
+    }
+
+    // --- Library Section Detail View (Netflix Series Page) ---
+    function LibrarySectionDetailView({ section, onBack, onViewResource, onOpenFolder, isPrivileged }) {
+       const allResources = section.resources || [];
+       const rootItems = allResources.filter(r => r.parentId === null);
+       
+       // Play button functionality: Plays the first playable video/youtube, otherwise just the first item
+       const handlePlayFirst = () => {
+          if (rootItems.length === 0) return;
+          const firstVideo = rootItems.find(r => r.type === 'video' || r.type === 'youtube');
+          if (firstVideo) onViewResource(firstVideo);
+          else if (!rootItems[0].isFolder) onViewResource(rootItems[0]);
+          else onOpenFolder(rootItems[0].id);
+       };
+
+       return (
+         <div className="animate-in fade-in duration-500 w-full min-h-full bg-[#050505] text-white">
+            
+            {/* Massive Detail Hero */}
+            <div className="relative w-full h-[60vh] md:h-[75vh] flex items-end">
+               <div className="absolute top-6 left-6 md:top-10 md:left-12 z-50">
+                   <button onClick={onBack} className="w-12 h-12 bg-black/50 border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors backdrop-blur-md shadow-xl">
+                      <ChevronLeft size={24} />
+                   </button>
+               </div>
+
+               <div className="absolute inset-0 z-0">
+                  <img src={section.coverUrl || section.thumbnailUrl || 'Assets/Images/Logo.png'} className={`w-full h-full object-cover ${!section.coverUrl && !section.thumbnailUrl ? 'opacity-10 object-contain' : 'opacity-60'}`} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/40 to-transparent"></div>
+               </div>
+               
+               <div className="relative z-10 p-6 md:p-16 max-w-4xl w-full">
+                  <h1 className="serif text-5xl md:text-7xl lg:text-8xl mb-4 text-white drop-shadow-2xl font-bold leading-tight">{section.title}</h1>
+                  <div className="flex items-center gap-4 mb-6 text-gray-400 text-sm font-bold">
+                     <span className="text-green-500">98% Match</span>
+                     <span>{new Date(section.createdAt).getFullYear()}</span>
+                     <span className="border border-gray-600 px-1.5 py-0.5 rounded text-[10px]">PREMIUM</span>
+                     <span>{allResources.length} Items</span>
+                  </div>
+                  <p className="text-white text-sm md:text-lg mb-8 max-w-2xl leading-relaxed drop-shadow-md">
+                     {section.description || "A curated collection of resources, videos, and masterclasses specifically assembled for your conservatory journey."}
+                  </p>
+                  
+                  <div className="flex items-center gap-4">
+                     <button onClick={handlePlayFirst} className="bg-white text-black hover:bg-gray-200 px-8 py-3.5 md:py-4 rounded-lg text-sm md:text-base font-bold transition-all flex items-center gap-3 active:scale-95 shadow-xl">
+                        <Play fill="currentColor" size={24} /> Play
+                     </button>
+                  </div>
+               </div>
+            </div>
+
+            {/* Asset Grid (Episodes Style) */}
+            <div className="px-6 md:px-16 pb-24 mt-8">
+               <div className="flex items-center gap-6 border-b border-white/10 mb-8 pb-4">
+                  <h3 className="text-xl md:text-2xl font-bold text-white">Episodes & Resources</h3>
+               </div>
+
+               {rootItems.length === 0 ? (
+                  <div className="text-center text-gray-500 font-bold uppercase tracking-widest text-xs p-10">No items in this section.</div>
+               ) : (
+                  <div className="flex flex-col gap-4 max-w-5xl">
+                     {rootItems.sort((a,b) => (b.isFolder ? 1 : 0) - (a.isFolder ? 1 : 0)).map((item, idx) => (
+                         <div 
+                           key={item.id} 
+                           onClick={() => item.isFolder ? onOpenFolder(item.id) : onViewResource(item)}
+                           className="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 cursor-pointer transition-all group relative"
+                         >
+                            <span className="text-gray-600 font-bold text-xl md:text-2xl w-8 md:text-center shrink-0 hidden md:block">{idx + 1}</span>
+                            
+                            <div className="w-full md:w-48 aspect-[16/9] bg-[#111] rounded-md shrink-0 relative overflow-hidden shadow-lg border border-white/5">
+                               <img src={item.thumbnailUrl || (item.isFolder ? section.thumbnailUrl || section.coverUrl || 'Assets/Images/Logo.png' : 'Assets/Images/Logo.png')} className={`w-full h-full object-cover transition-opacity ${!item.thumbnailUrl ? 'opacity-30 p-4 object-contain' : 'opacity-80 group-hover:opacity-100'}`} />
+                               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
+                                   {item.isFolder ? <FolderOpen size={24} className="text-white"/> : <PlayCircle size={32} className="text-white"/>}
+                               </div>
+                            </div>
+                            
+                            <div className="flex-1 min-w-0 pr-4 flex flex-col justify-center">
+                               <div className="flex items-center justify-between mb-2">
+                                  <h4 className="text-white font-bold text-sm md:text-base truncate group-hover:text-white transition-colors">{item.title}</h4>
+                                  <span className="text-gray-500 text-xs">{item.isFolder ? 'Collection' : item.type}</span>
+                               </div>
+                               <p className="text-gray-400 text-xs md:text-sm font-light line-clamp-2 leading-relaxed">{item.description || "No description provided for this specific item."}</p>
+                            </div>
+                         </div>
+                     ))}
+                  </div>
+               )}
+            </div>
+         </div>
+       );
+    }
+
+    // --- Library Folder Viewer (Netflix Episode List Style, deeper level) ---
+    function LibraryFolderView({ section, folderId, onBack, onViewResource, onOpenFolder, isPrivileged }) {
+        const allResources = section.resources || [];
+        const currentResources = allResources.filter(r => r.parentId === folderId);
+        const folderInfo = allResources.find(r => r.id === folderId);
+        const breadcrumbs = buildBreadcrumbs(folderId, allResources);
+
+        return (
+           <div className="animate-in fade-in duration-500 w-full min-h-full bg-[#050505] text-white pt-6 md:pt-10 px-4 md:px-12 pb-24">
+               <div className="mb-10">
+                   <button onClick={onBack} className="w-10 h-10 bg-white/10 border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors backdrop-blur-md">
+                      <ChevronLeft size={20} />
+                   </button>
+               </div>
+               
+               <header className="mb-10 border-b border-white/10 pb-8 flex flex-col md:flex-row md:items-end gap-6 md:gap-10">
+                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-gradient-to-br from-[#111] to-black border border-white/10 flex items-center justify-center text-[#D4AF37] shrink-0 shadow-2xl">
+                     <FolderOpen size={48} className="opacity-50" />
+                  </div>
+                  <div>
+                      <div className="flex flex-wrap items-center gap-2 mb-3 text-[10px] md:text-xs font-bold tracking-widest uppercase text-[#D4AF37]">
+                          <span className="text-gray-500">{section.title}</span>
+                          {breadcrumbs.map(f => (
+                             <React.Fragment key={f.id}>
+                                <ChevronRight size={14} className="text-gray-600" />
+                                <span>{f.title}</span>
+                             </React.Fragment>
+                          ))}
+                      </div>
+                      <h1 className="serif text-4xl md:text-5xl lg:text-6xl text-white break-words">{folderInfo?.title || "Collection"}</h1>
+                  </div>
+               </header>
+
+               {currentResources.length === 0 ? (
+                  <div className="text-center text-gray-500 font-bold uppercase tracking-widest text-xs p-20 border border-white/5 rounded-3xl bg-[#0a0a0a]">Empty Collection</div>
+               ) : (
+                  <div className="flex flex-col gap-3 md:gap-4 max-w-5xl">
+                     {currentResources.sort((a,b) => (b.isFolder ? 1 : 0) - (a.isFolder ? 1 : 0)).map((item, idx) => (
+                         <div 
+                           key={item.id} 
+                           onClick={() => item.isFolder ? onOpenFolder(item.id) : onViewResource(item)}
+                           className="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 cursor-pointer transition-all group relative"
+                         >
+                            <span className="text-gray-600 font-bold text-xl md:text-2xl w-8 md:text-center shrink-0 hidden md:block">{idx + 1}</span>
+                            
+                            <div className="w-full md:w-40 aspect-[16/9] bg-[#111] rounded-md shrink-0 relative overflow-hidden shadow-lg border border-white/5">
+                               <img src={item.thumbnailUrl || (item.isFolder ? section.thumbnailUrl || section.coverUrl || 'Assets/Images/Logo.png' : 'Assets/Images/Logo.png')} className={`w-full h-full object-cover transition-opacity ${!item.thumbnailUrl ? 'opacity-30 p-2 object-contain' : 'opacity-80 group-hover:opacity-100'}`} />
+                               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
+                                   {item.isFolder ? <FolderOpen size={24} className="text-white"/> : <PlayCircle size={28} className="text-white"/>}
+                               </div>
+                            </div>
+                            
+                            <div className="flex-1 min-w-0 pr-4 flex flex-col justify-center">
+                               <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                     <h4 className="text-white font-bold text-sm md:text-base truncate group-hover:text-white transition-colors">{item.title}</h4>
+                                     {item.isPremium && <Crown size={12} className="text-[#D4AF37]" />}
+                                  </div>
+                                  <span className="text-gray-500 text-[10px] uppercase tracking-widest font-bold">{item.isFolder ? 'Collection' : item.type}</span>
+                               </div>
+                               <p className="text-gray-400 text-xs md:text-sm font-light line-clamp-2 leading-relaxed">{item.description || (item.isFolder ? "Open Collection" : `Asset Type: ${item.type.toUpperCase()}`)}</p>
+                            </div>
+                         </div>
+                     ))}
+                  </div>
+               )}
+           </div>
+        );
+    }
+
+    // --- Admin Views for Library ---
+    function LibraryAdminManager({ allLibrary, onOpenSection, onBackToBrowse, showConfirm }) {
+        const [showModal, setShowModal] = useState(false);
+        const [editSectionInfo, setEditSectionInfo] = useState(null);
+
+        const handleSaveSection = async (e) => {
+           e.preventDefault();
+           const form = e.target;
+           
+           const dataToSave = {
+              title: form.title.value,
+              description: form.description.value,
+              thumbnailUrl: form.thumbnailUrl.value || "",
+              coverUrl: form.coverUrl.value || ""
+           };
+
+           try {
+             if (editSectionInfo) {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'library', editSectionInfo.id), dataToSave);
+                toast("Section Updated");
+             } else {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'library', crypto.randomUUID()), {
+                  ...dataToSave,
+                  resources: [],
+                  createdAt: new Date().toISOString()
+                });
+                toast("Library Section Created");
+             }
+             setShowModal(false);
+             setEditSectionInfo(null);
+           } catch(err) { toast("Error saving section"); }
+        };
+
+        const deleteSection = async (id, e) => {
+           e.stopPropagation();
+           showConfirm("Delete Section", "Permanently delete this entire library section and all assets inside it?", async () => {
+             try {
+               await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'library', id));
+               toast("Section Deleted");
+             } catch(err) { toast("Error deleting section"); }
+           });
+        };
+
+        const openEditModal = (section, e) => {
+           e.stopPropagation();
+           setEditSectionInfo(section);
+           setShowModal(true);
+        };
+
+        const closeModals = () => {
+           setShowModal(false);
+           setEditSectionInfo(null);
+        }
+
+        return (
+           <div className="animate-in fade-in slide-in-from-right-8 duration-500 w-full min-h-full px-4 md:px-12 py-8">
+               <button onClick={onBackToBrowse} className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest mb-8 hover:text-white transition-colors flex items-center gap-2">
+                  <ChevronLeft size={18} /> Back to Browse
+               </button>
+               
+               <header className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-12">
+                  <div>
+                     <h1 className="serif text-4xl md:text-5xl lg:text-6xl mb-3 text-white">Library <span className="gold-gradient-text italic">Manager</span></h1>
+                     <p className="text-gray-400 text-sm font-light">Create and organize massive content rows & Netflix-style detail pages.</p>
+                  </div>
+                  <button onClick={() => setShowModal(true)} className="bg-gradient-to-br from-[#D4AF37] to-[#B38D22] text-black px-6 py-4 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(212,175,55,0.3)] flex items-center justify-center gap-3 shrink-0 hover:scale-105 transition-transform active:scale-95">
+                     <Plus size={20} /> New Section
+                  </button>
+               </header>
+
+               <div className="space-y-4 max-w-5xl">
+                  {allLibrary.sort((a,b) => (a.createdAt > b.createdAt ? -1 : 1)).map(section => (
+                     <div key={section.id} onClick={() => onOpenSection(section.id)} className="glass-premium p-4 md:p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between border border-[#D4AF37]/20 hover:border-[#D4AF37]/50 cursor-pointer group hover-lift shadow-lg gap-4">
+                        <div className="flex items-center gap-5 overflow-hidden pr-4">
+                           <div className="w-24 md:w-40 aspect-video bg-[#111] rounded-lg border border-white/10 overflow-hidden shrink-0 shadow-inner relative">
+                               <img src={section.coverUrl || section.thumbnailUrl || 'Assets/Images/Logo.png'} className={`w-full h-full object-cover ${!section.coverUrl && !section.thumbnailUrl ? 'opacity-30 p-2 object-contain' : ''}`} />
+                           </div>
+                           <div className="flex-1 min-w-0">
+                              <h3 className="serif text-2xl md:text-3xl text-white mb-1 group-hover:text-[#D4AF37] transition-colors truncate">{section.title}</h3>
+                              <p className="text-gray-400 text-xs font-light line-clamp-1 mb-2">{section.description}</p>
+                              <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">{section.resources?.length || 0} Assets Inside</p>
+                           </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 md:ml-auto">
+                           <button onClick={(e) => openEditModal(section, e)} className="px-4 py-3 bg-black/50 border border-white/10 rounded-xl text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors">
+                              Edit Details
+                           </button>
+                           <button onClick={(e) => deleteSection(section.id, e)} className="w-12 h-12 bg-black/50 border border-white/10 rounded-xl flex items-center justify-center text-gray-500 hover:text-red-400 hover:border-red-500/30 transition-all">
+                              <Trash2 size={20} />
+                           </button>
+                           <ChevronRight size={24} className="text-gray-600 group-hover:text-white ml-2 transition-colors hidden md:block" />
+                        </div>
+                     </div>
+                  ))}
+                  {allLibrary.length === 0 && <div className="p-10 text-center glass rounded-2xl border border-white/5 text-gray-500 text-xs font-bold uppercase tracking-widest">No sections constructed yet.</div>}
+               </div>
+
+               {showModal && (
+                  <div className="fixed inset-0 z-[100] flex items-center justify-center p-5 bg-[#050505]/90 backdrop-blur-xl animate-in fade-in">
+                    <div className="glass-premium p-8 md:p-12 rounded-[2rem] w-full max-w-2xl border border-[#D4AF37]/30 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+                      <button onClick={closeModals} className="absolute top-6 right-6 text-gray-500 hover:text-white"><X size={28}/></button>
+                      <h2 className="serif text-3xl md:text-4xl mb-3 text-white italic">{editSectionInfo ? 'Edit Section' : 'Create Section'}</h2>
+                      <p className="text-[#D4AF37] text-[10px] uppercase tracking-widest font-bold mb-8">Define the Netflix-style Hero Details</p>
+                      <form onSubmit={handleSaveSection} className="space-y-6">
+                        <div>
+                           <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-2 block">Section Title</label>
+                           <input name="title" type="text" defaultValue={editSectionInfo?.title} required className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-[#D4AF37] transition-all text-white" />
+                        </div>
+                        <div>
+                           <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-2 block">Description (Shown on Section Page)</label>
+                           <textarea name="description" defaultValue={editSectionInfo?.description} rows={4} className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-[#D4AF37] transition-all text-white font-light resize-none custom-scrollbar"></textarea>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                           <div>
+                              <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-2 block">Horizontal Cover Image URL (Hero)</label>
+                              <input name="coverUrl" type="url" defaultValue={editSectionInfo?.coverUrl} className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-xs outline-none focus:border-[#D4AF37] transition-all text-white" />
+                           </div>
+                           <div>
+                              <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-2 block">Thumbnail / Poster URL (Optional)</label>
+                              <input name="thumbnailUrl" type="url" defaultValue={editSectionInfo?.thumbnailUrl} className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-xs outline-none focus:border-[#D4AF37] transition-all text-white" />
+                           </div>
+                        </div>
+
+                        <div className="flex gap-4 pt-4">
+                          <button type="button" onClick={closeModals} className="flex-1 py-4 border border-white/10 rounded-2xl text-[11px] font-bold tracking-widest uppercase text-gray-400 hover:text-white transition-colors">Cancel</button>
+                          <button type="submit" className="flex-1 bg-[#D4AF37] text-black rounded-2xl text-[11px] font-bold tracking-widest uppercase hover:bg-[#F9E29D] transition-colors shadow-xl">
+                             {editSectionInfo ? 'Save Details' : 'Create Section'}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+               )}
+           </div>
+        );
+    }
+
+    function LibrarySectionEditor({ section, onBack, showConfirm }) {
+      const [currentFolderId, setCurrentFolderId] = useState(null);
+      const [showResourceModal, setShowResourceModal] = useState(false);
+      const [showFolderModal, setShowFolderModal] = useState(false);
+      
+      const openFolder = (id) => {
+         window.history.pushState({ internalNav: true }, "");
+         setCurrentFolderId(id);
+      };
+
+      const removeResource = async (resId) => {
+        showConfirm("Remove Material", "Remove this asset permanently?", async () => {
+          const allRes = section.resources || [];
+          let toDelete = [resId];
+          const resource = allRes.find(r => r.id === resId);
+          if(resource?.isFolder) toDelete = toDelete.concat(getAllChildrenIds(resId, allRes));
+          const newResources = allRes.filter(r => !toDelete.includes(r.id));
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'library', section.id), { resources: newResources });
+          toast("Asset Removed");
+        });
+      };
+
+      const allResources = section.resources || [];
+      const currentResources = allResources.filter(r => (r.parentId || null) === currentFolderId);
+      const breadcrumbs = buildBreadcrumbs(currentFolderId, allResources);
+
+      return (
+         <div className="animate-in fade-in slide-in-from-right-8 duration-500 w-full min-h-full px-4 md:px-12 py-8">
+            <button onClick={onBack} className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest mb-8 hover:text-white transition-colors flex items-center gap-2">
+               <ChevronLeft size={18} /> Back to Sections
+            </button>
+
+            <header className="mb-8 md:mb-12 relative rounded-[2rem] overflow-hidden glass-premium border border-[#D4AF37]/20 p-8 md:p-12 shadow-2xl flex flex-col md:flex-row gap-8 items-center md:items-start">
+              {(section.coverUrl || section.thumbnailUrl) && (
+                 <div className="absolute inset-0 z-0">
+                    <img src={section.coverUrl || section.thumbnailUrl} className="w-full h-full object-cover opacity-20 mix-blend-overlay"/>
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/80 to-[#050505]"></div>
+                 </div>
+              )}
+              <div className="relative z-10 flex-1 text-center md:text-left">
+                <span className="bg-[#D4AF37] text-black px-3 py-1.5 rounded-lg text-[10px] md:text-[9px] font-bold uppercase tracking-widest mb-4 inline-block">Section Editor</span>
+                <h1 className="serif text-3xl md:text-5xl mb-2 text-white leading-tight break-words">{section.title}</h1>
+                <p className="text-gray-400 text-sm font-light mb-4 line-clamp-2">{section.description}</p>
+                <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest">{allResources.length} Total Assets Inside</p>
+              </div>
+            </header>
+
+            <div className="space-y-6 md:space-y-8 max-w-5xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h3 className="serif text-2xl md:text-3xl text-white italic">Assets Directory</h3>
+                <div className="flex gap-3">
+                   <button onClick={() => setShowFolderModal(true)} className="flex-1 sm:flex-none px-6 py-4 glass text-gray-300 rounded-xl flex items-center justify-center gap-2 hover:text-white hover:border-[#D4AF37]/50 transition-all text-[10px] font-bold uppercase tracking-widest border border-white/10 shadow-lg">
+                     <FolderPlus size={18} /> Folder
+                   </button>
+                   <button onClick={() => setShowResourceModal(true)} className="flex-1 sm:flex-none px-6 py-4 bg-gradient-to-br from-[#D4AF37] to-[#B38D22] text-black rounded-xl flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg">
+                     <Plus size={18} /> Asset
+                   </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 text-[10px] text-gray-400 uppercase tracking-widest font-bold bg-black/40 p-4 md:p-5 rounded-xl border border-white/5 overflow-x-auto custom-scrollbar">
+                <button onClick={() => setCurrentFolderId(null)} className="hover:text-white transition-colors flex items-center gap-2 shrink-0">
+                  <FolderOpen size={16}/> Root
+                </button>
+                {breadcrumbs.map((f, i) => (
+                  <React.Fragment key={f.id}>
+                    <ChevronRight size={14} className="text-[#D4AF37]/50 shrink-0" />
+                    <button onClick={() => openFolder(f.id)} className={`hover:text-white transition-colors break-words line-clamp-1 max-w-[150px] shrink-0 ${i === breadcrumbs.length-1 ? 'text-[#D4AF37]' : ''}`}>
+                      {f.title}
+                    </button>
+                  </React.Fragment>
+                ))}
+              </div>
+
+              <div className="space-y-4">
+                {currentResources.length === 0 ? (
+                  <div className="glass-premium rounded-2xl md:rounded-[2rem] p-10 md:p-16 text-center text-gray-500 text-[10px] font-bold tracking-[0.2em] uppercase border border-white/5">Empty Location</div>
+                ) : (
+                  currentResources.sort((a,b) => (b.isFolder ? 1 : 0) - (a.isFolder ? 1 : 0)).map(r => (
+                    <div key={r.id} onClick={() => r.isFolder ? openFolder(r.id) : null} className={`glass p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between group hover-lift border border-white/5 hover:border-[#D4AF37]/30 transition-all ${r.isFolder ? 'cursor-pointer' : ''}`}>
+                      <div className="flex items-center gap-4 pr-3 overflow-hidden w-full mb-3 sm:mb-0">
+                        {r.thumbnailUrl ? (
+                           <img src={r.thumbnailUrl} className="w-16 h-10 object-cover rounded bg-[#111] shrink-0" />
+                        ) : (
+                           <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border border-white/10 shadow-inner ${r.isFolder ? 'bg-gradient-to-br from-[#D4AF37]/20 to-black text-[#D4AF37]' : 'bg-gradient-to-br from-gray-800 to-black text-gray-400 group-hover:text-white'}`}>
+                              {r.isFolder ? <Folder size={20} className="fill-[#D4AF37]/20"/> : <FileText size={20}/>}
+                           </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-white text-sm font-bold tracking-wide mb-1 break-words line-clamp-2">{r.title}</h4>
+                          <div className="flex items-center gap-2 flex-wrap">
+                             <span className="text-[#D4AF37] opacity-80 text-[9px] uppercase tracking-widest font-bold">{r.isFolder ? 'Folder' : r.type}</span>
+                             {r.isPremium && <span className="bg-[#D4AF37]/20 border border-[#D4AF37]/30 text-[#D4AF37] px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest flex items-center gap-1"><Crown size={10}/> Premium</span>}
+                          </div>
+                        </div>
+                      </div>
+                      <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeResource(r.id); }} className="w-full sm:w-auto text-gray-500 hover:text-red-400 p-3 rounded-xl hover:bg-red-500/10 transition-colors bg-black/40 border border-white/5 sm:border-transparent flex items-center justify-center">
+                         <Trash2 size={18} className="sm:mr-0 mr-2" /> <span className="sm:hidden text-xs font-bold uppercase tracking-widest">Delete</span>
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {showResourceModal && <ResourceCreatorModal docId={section.id} parentId={currentFolderId} collectionName="library" onClose={() => setShowResourceModal(false)} />}
+            {showFolderModal && <CreateFolderModal docId={section.id} parentId={currentFolderId} collectionName="library" onClose={() => setShowFolderModal(false)} />}
+         </div>
+      );
+    }
+
+    // ==========================================
+    // ADMIN USERS (Updated with Search & Role Filters)
+    // ==========================================
+    function AdminUsers({ users, courses, showConfirm }) {
+      const [searchTerm, setSearchTerm] = useState('');
+      const [roleFilter, setRoleFilter] = useState('all');
+
+      const toggleRole = async (userId, userRoles, targetRole) => {
+        try {
+          const targetUser = users.find(u => u.id === userId);
+          if (targetRole === 'admin' && targetUser?.email !== 'chandrashekharkolhe7@gmail.com') {
+             toast("Admin role restricted to chandrashekharkolhe7@gmail.com");
+             return;
+          }
+
+          let newRoles = [...(userRoles || [])];
+          if (newRoles.includes(targetRole)) newRoles = newRoles.filter(r => r !== targetRole);
+          else newRoles.push(targetRole);
+          if (newRoles.length === 0) newRoles = ['user']; 
+
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', userId), { roles: newRoles });
+          await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'profile', 'info'), { roles: newRoles });
+          toast("Role Updated");
+        } catch(err) { toast("Error updating role"); }
+      };
+
+      const handleEnrollment = async (userId, userRoles, userCourses, courseId) => {
+        try {
+          let updatedCourses = [...(userCourses || [])];
+          if (updatedCourses.includes(courseId)) updatedCourses = updatedCourses.filter(id => id !== courseId);
+          else updatedCourses.push(courseId);
+
+          // Auto-promote 'user' to 'student' if they are assigned a course
+          let newRoles = [...(userRoles || [])];
+          if (updatedCourses.length > 0 && newRoles.length === 1 && newRoles[0] === 'user') {
+             newRoles = ['student'];
+          }
+
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', userId), { enrolledCourses: updatedCourses, roles: newRoles });
+          await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'profile', 'info'), { enrolledCourses: updatedCourses, roles: newRoles });
+          toast("Enrollment Updated");
+        } catch(err) { toast("Error updating enrollment"); }
+      };
+
+      const removeUser = async (userId) => {
+        showConfirm("Delete Profile", "Permanently delete this user profile? This action cannot be undone.", async () => {
+          try {
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', userId));
+            toast("User Profile Deleted");
+          } catch(err) { toast("Error deleting user"); }
+        });
+      };
+
+      const filteredUsers = users.filter(u => {
+         const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase());
+         const matchesRole = roleFilter === 'all' || u.roles?.includes(roleFilter);
+         return matchesSearch && matchesRole;
+      });
+
+      return (
+        <div className="animate-in fade-in duration-500">
+          <header className="mb-8 md:mb-10">
+            <h1 className="serif text-4xl md:text-5xl lg:text-6xl mb-3 text-white">User <span className="gold-gradient-text italic">Directory</span></h1>
+            <p className="text-gray-300 text-sm font-light">Manage accounts, roles, and course placements.</p>
+          </header>
+
+          {/* Search and Filters */}
+          <div className="flex flex-col md:flex-row gap-4 mb-8">
+             <div className="relative flex-1">
+               <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500" />
+               <input type="text" placeholder="SEARCH BY NAME OR EMAIL..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-black/60 border border-white/10 p-5 pl-14 rounded-2xl text-xs font-bold tracking-widest uppercase outline-none focus:border-[#D4AF37] transition-all text-white placeholder:text-gray-600 shadow-inner" />
+             </div>
+             <div className="relative md:w-64 shrink-0">
+               <Filter size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+               <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} className="w-full bg-black/60 border border-white/10 p-5 pl-14 pr-10 rounded-2xl text-xs font-bold tracking-widest uppercase outline-none focus:border-[#D4AF37] transition-all text-[#D4AF37] appearance-none cursor-pointer shadow-inner">
+                  <option value="all">All Roles</option>
+                  <option value="user">User</option>
+                  <option value="student">Student</option>
+                  <option value="teacher">Teacher</option>
+                  <option value="admin">Admin</option>
+               </select>
+               <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"/>
+             </div>
+          </div>
+
+          <div className="space-y-5 pb-12">
+            {filteredUsers.length === 0 ? (
+               <div className="glass-premium p-10 rounded-3xl text-center text-gray-500 text-xs font-bold uppercase tracking-widest border border-white/5">No users found matching filters.</div>
+            ) : (
+               filteredUsers.map(u => (
+                 <div key={u.id} className="relative z-0 hover:z-50 focus-within:z-50 glass-premium p-5 md:p-8 rounded-[1.5rem] flex flex-col xl:flex-row xl:items-center justify-between gap-6 border border-white/5 shadow-lg">
+                   <div className="flex items-center gap-5">
+                     <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center text-white serif text-2xl md:text-3xl shadow-inner shrink-0 overflow-hidden">
+                       {u.profilePic ? <img src={u.profilePic} className="w-full h-full object-cover" /> : u.name.charAt(0)}
+                     </div>
+                     <div className="overflow-hidden flex-1">
+                       <h4 className="text-base font-medium text-white mb-2 break-words line-clamp-1">{u.name}</h4>
+                       <div className="flex flex-wrap gap-2">
+                         {u.roles?.map(r => <span key={r} className="text-[10px] md:text-[9px] bg-black text-[#D4AF37] border border-[#D4AF37]/30 px-3 py-1 rounded-md font-bold uppercase tracking-[0.2em]">{r}</span>)}
+                       </div>
+                     </div>
+                   </div>
+                   <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                     <div className="flex bg-black/50 p-1.5 rounded-xl border border-white/10 flex-1 sm:flex-none">
+                       {['user', 'student', 'teacher', 'admin'].map(r => (
+                          <button key={r} onClick={() => toggleRole(u.id, u.roles || [], r)} className={`flex-1 sm:flex-none px-3 py-3 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all ${u.roles?.includes(r) ? 'bg-[#D4AF37] text-black shadow-md' : 'text-gray-500 hover:text-white'}`}>{r.substring(0,4)}</button>
+                       ))}
+                     </div>
+                     <div className="relative group flex-1 sm:flex-none">
+                       <button className="w-full bg-black/50 border border-white/10 px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest text-gray-300 hover:text-white hover:border-[#D4AF37]/50 transition-all">Courses</button>
+                       <div className="absolute right-0 top-full mt-2 w-full sm:w-72 glass-premium p-5 rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all z-20 max-h-64 overflow-y-auto shadow-2xl border border-[#D4AF37]/30 custom-scrollbar">
+                          <p className="text-[10px] text-[#D4AF37] uppercase tracking-widest font-bold mb-4 border-b border-white/10 pb-3">Available Courses</p>
+                          {courses.length === 0 ? <p className="text-xs text-gray-400">No courses exist.</p> : courses.map(c => {
+                            const isEnrolled = u.enrolledCourses?.includes(c.id);
+                            return (
+                              <label key={c.id} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer transition-colors mb-1">
+                                <input type="checkbox" checked={isEnrolled} onChange={() => handleEnrollment(u.id, u.roles, u.enrolledCourses, c.id)} className="accent-[#D4AF37] w-5 h-5 rounded shrink-0" />
+                                <span className="text-sm md:text-sm text-white break-words font-light">{c.title}</span>
+                              </label>
+                            )
+                          })}
+                       </div>
+                     </div>
+                     <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeUser(u.id); }} className="px-5 py-3 bg-black/50 hover:bg-red-500/20 text-gray-500 hover:text-red-400 border border-white/10 rounded-xl transition-all flex items-center justify-center shrink-0">
+                       <Trash2 size={20} />
+                     </button>
+                   </div>
+                 </div>
+               ))
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Polyfill ChevronDown inside AdminUsers
+    const ChevronDown = ({ size, className }) => (
+       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="6 9 12 15 18 9"></polyline></svg>
+    );
+
+    // ==========================================
+    // REUSABLE MODALS (Courses & Library)
+    // ==========================================
+    function CreateFolderModal({ docId, parentId, onClose, collectionName = 'courses' }) {
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        const title = e.target.title.value;
+        const newFolder = {
+           id: crypto.randomUUID(),
+           type: 'folder',
+           isFolder: true,
+           title: title,
+           parentId: parentId || null,
+           createdAt: new Date().toISOString()
+        };
+        try {
+           await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', collectionName, docId), {
+              resources: arrayUnion(newFolder)
+           });
+           toast("Folder Created");
+           onClose();
+        } catch(err) {
+           toast("Error creating folder");
+        }
+      };
+
+      return (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-5 bg-[#050505]/90 backdrop-blur-xl animate-in fade-in">
+          <div className="glass-premium p-8 md:p-12 w-full max-w-lg rounded-[2rem] md:rounded-[3rem] relative border border-[#D4AF37]/30 shadow-2xl">
+            <button onClick={onClose} className="absolute top-6 right-6 md:top-8 md:right-8 text-gray-500 hover:text-white"><X size={28}/></button>
+            <h2 className="serif text-3xl md:text-5xl mb-3 text-white italic">Create Folder</h2>
+            <p className="text-[#D4AF37] text-[10px] uppercase tracking-widest font-bold mb-8">Organize Content</p>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <input name="title" type="text" placeholder="FOLDER NAME" required className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl text-sm md:text-sm tracking-widest uppercase outline-none focus:border-[#D4AF37] transition-all text-white placeholder:text-gray-600" />
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button type="button" onClick={onClose} className="flex-1 py-4 md:py-5 border border-white/10 rounded-2xl text-xs md:text-[11px] font-bold tracking-widest uppercase text-gray-400 hover:text-white transition-colors">Cancel</button>
+                <button type="submit" className="flex-1 bg-[#D4AF37] text-black rounded-2xl text-xs md:text-[11px] font-bold tracking-widest uppercase hover:bg-[#F9E29D] transition-colors shadow-xl">Create</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    function ResourceCreatorModal({ docId, parentId, onClose, collectionName = 'courses', defaultType = 'pdf' }) {
+      const [type, setType] = useState(defaultType);
+      const [inputMode, setInputMode] = useState('upload');
+      const [uploading, setUploading] = useState(false);
+      const [progress, setProgress] = useState(0);
+
+      const [singleFile, setSingleFile] = useState(null);
+      const [multiFiles, setMultiFiles] = useState([]);
+      const [thumbnailFile, setThumbnailFile] = useState(null);
+
+      const allowsUpload = ['pdf', 'video', 'image', 'collage'].includes(type);
+
+      useEffect(() => {
+        if (!allowsUpload) setInputMode('url');
+        else setInputMode('upload');
+      }, [type, allowsUpload]);
+
+      const uploadToStorage = (file, pathPrefix) => {
+        return new Promise(async (resolve, reject) => {
+          let fileToUpload = file;
+          
+          if (file.type.startsWith('image/')) {
+            try {
+              fileToUpload = await new Promise((res, rej) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                  const img = new Image();
+                  img.src = event.target.result;
+                  img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX = 1920;
+                    let { width, height } = img;
+                    if (width > height && width > MAX) { height *= MAX / width; width = MAX; }
+                    else if (height > MAX) { width *= MAX / height; height = MAX; }
+                    canvas.width = width;
+                    canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    
+                    canvas.toBlob((blob) => {
+                      if(blob) {
+                         const compressedFile = new File([blob], file.name || "image.jpg", { type: 'image/jpeg' });
+                         res(compressedFile);
+                      } else rej(new Error("Image compression failed"));
+                    }, 'image/jpeg', 0.8);
+                  };
+                  img.onerror = () => rej(new Error("Failed to load image logic"));
+                };
+                reader.onerror = () => rej(new Error("Failed to read original image file"));
+              });
+            } catch (e) {
+              fileToUpload = file;
+            }
+          }
+
+          try {
+            const uniqueName = `${crypto.randomUUID()}_${fileToUpload.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+            const sRef = storageRef(storage, `artifacts/${appId}/public/data/${pathPrefix}_${uniqueName}`);
+            const uploadTask = uploadBytesResumable(sRef, fileToUpload);
+
+            uploadTask.on('state_changed', 
+              (snapshot) => setProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)), 
+              (error) => reject(new Error("Storage Error.")), 
+              async () => {
+                const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                resolve(downloadUrl);
+              }
+            );
+          } catch (err) { reject(new Error("Upload logic error.")); }
+        });
+      };
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setUploading(true);
+        setProgress(0);
+        const form = e.target;
+        const isPremium = form.isPremium?.checked || false;
+        
+        try {
+          let finalUrl = "";
+          let finalThumbnailUrl = null;
+          let finalDesc = form.desc ? form.desc.value : "";
+
+          if (inputMode === 'upload' && allowsUpload) {
+            if (type === 'collage') {
+              if (multiFiles.length === 0) throw new Error("No files selected.");
+              const urls = await Promise.all(Array.from(multiFiles).map(f => uploadToStorage(f, 'collages')));
+              finalUrl = urls.join(',');
+            } else {
+              if (!singleFile) throw new Error("No file selected.");
+              finalUrl = await uploadToStorage(singleFile, type);
+              if ((type === 'video' || type === 'image') && thumbnailFile) {
+                finalThumbnailUrl = await uploadToStorage(thumbnailFile, 'thumbnails');
+              }
+            }
+          } else {
+            finalUrl = form.url.value;
+            if (type === 'youtube') {
+               if (thumbnailFile) {
+                 finalThumbnailUrl = await uploadToStorage(thumbnailFile, 'thumbnails');
+               } else {
+                 const yId = extractYoutubeId(finalUrl);
+                 if (yId) finalThumbnailUrl = `https://img.youtube.com/vi/${yId}/maxresdefault.jpg`;
+               }
+            } else if (thumbnailFile) {
+               finalThumbnailUrl = await uploadToStorage(thumbnailFile, 'thumbnails');
+            }
+          }
+
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', collectionName, docId), {
+            resources: arrayUnion({ 
+              id: crypto.randomUUID(),
+              type, 
+              url: finalUrl, 
+              thumbnailUrl: finalThumbnailUrl,
+              title: form.title.value,
+              description: finalDesc,
+              isPremium: isPremium,
+              parentId: parentId || null, 
+              createdAt: new Date().toISOString()
+            })
+          });
+
+          toast("Asset Published Successfully");
+          onClose();
+        } catch(err) {
+          toast(err.message || "Error publishing asset");
+        } finally {
+          setUploading(false);
+        }
+      };
+
+      const getAcceptType = () => {
+        if (type === 'pdf') return 'application/pdf';
+        if (type === 'video') return 'video/*';
+        if (type === 'image' || type === 'collage') return 'image/*';
+        return '*/*';
+      };
+
+      return (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-5 bg-[#050505]/90 backdrop-blur-xl animate-in fade-in">
+          <div className="glass-premium p-6 md:p-12 w-full max-w-3xl relative max-h-[95vh] overflow-y-auto custom-scrollbar rounded-[2rem] md:rounded-[3rem] border border-[#D4AF37]/30 shadow-2xl">
+            {!uploading && <button onClick={onClose} className="absolute top-6 right-6 md:top-8 md:right-8 text-gray-500 hover:text-white"><X size={28}/></button>}
+            <h2 className="serif text-3xl md:text-5xl mb-2 text-white italic">Publish Asset</h2>
+            <p className="text-[#D4AF37] text-[10px] uppercase tracking-widest font-bold mb-8">Add to Library or Course</p>
+            <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
+              <div>
+                <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-3 block">Asset Type</label>
+                <div className="flex gap-3 overflow-x-auto pb-3 custom-scrollbar">
+                  {['pdf', 'video', 'image', 'collage', 'youtube', 'text', 'link'].map(t => (
+                    <button key={t} type="button" onClick={() => setType(t)} disabled={uploading} className={`px-4 md:px-5 py-2.5 md:py-3 rounded-xl text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-all border ${type === t ? 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/50 shadow-[0_0_15px_rgba(212,175,55,0.2)]' : 'bg-black/30 text-gray-500 border-white/5 hover:border-white/20'}`}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <input name="title" type="text" placeholder="ASSET TITLE" required disabled={uploading} className="w-full bg-black/50 border border-white/10 p-4 md:p-6 rounded-2xl text-sm tracking-widest uppercase outline-none focus:border-[#D4AF37] transition-all text-white placeholder:text-gray-600" />
+              </div>
+              
+              {allowsUpload && (
+                <div className="flex bg-black/40 border border-white/5 rounded-xl p-1.5 w-fit">
+                   <button type="button" disabled={uploading} onClick={() => setInputMode('upload')} className={`px-5 py-2.5 rounded-lg text-[10px] uppercase tracking-widest font-bold transition-all ${inputMode === 'upload' ? 'bg-[#D4AF37] text-black shadow-md' : 'text-gray-500 hover:text-white'}`}>Upload</button>
+                   <button type="button" disabled={uploading} onClick={() => setInputMode('url')} className={`px-5 py-2.5 rounded-lg text-[10px] uppercase tracking-widest font-bold transition-all ${inputMode === 'url' ? 'bg-[#D4AF37] text-black shadow-md' : 'text-gray-500 hover:text-white'}`}>URL</button>
+                </div>
+              )}
+              
+              <div className="glass border border-white/5 rounded-3xl p-5 md:p-8">
+                {type === 'text' && <div className="text-[#D4AF37] text-[10px] uppercase tracking-widest font-bold mb-4 bg-[#D4AF37]/10 p-4 rounded-xl border border-[#D4AF37]/20 flex items-center gap-3"><FileText size={18}/> Create a formatted text note.</div>}
+                {type === 'link' && <div className="text-[#D4AF37] text-[10px] uppercase tracking-widest font-bold mb-4 bg-[#D4AF37]/10 p-4 rounded-xl border border-[#D4AF37]/20 flex items-center gap-3"><LinkIcon size={18}/> Add an external URL link.</div>}
+
+                {inputMode === 'upload' && allowsUpload ? (
+                  <div className="space-y-5">
+                    <div>
+                      <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-3 block">{type === 'collage' ? 'Select Multiple Files' : 'Select Source File'}</label>
+                      <div className="relative border-2 border-dashed border-[#D4AF37]/30 rounded-[2rem] p-8 md:p-14 text-center hover:border-[#D4AF37]/60 transition-colors bg-black/30 group">
+                        <input type="file" accept={getAcceptType()} multiple={type === 'collage'} required disabled={uploading} onChange={(e) => type === 'collage' ? setMultiFiles(e.target.files) : setSingleFile(e.target.files[0])} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                        <FileIcon size={40} className="mx-auto text-[#D4AF37] group-hover:scale-110 mb-4 transition-transform opacity-70" />
+                        <p className="text-[#D4AF37] text-xs font-bold tracking-widest uppercase mb-2">Drag & Drop or Browse</p>
+                        <p className="text-gray-400 text-xs font-light">{type === 'collage' ? (multiFiles.length > 0 ? `${multiFiles.length} files selected` : `Supported: Images (Multiple)`) : (singleFile ? singleFile.name : `Supported: ${type.toUpperCase()}`)}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-5">
+                    {type === 'text' ? (
+                      <textarea name="url" placeholder="Type or paste formatted text notes here..." required disabled={uploading} rows={6} className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-[#D4AF37] transition-all text-white font-light resize-none custom-scrollbar" />
+                    ) : type === 'collage' ? (
+                      <textarea name="url" placeholder="COMMA SEPARATED IMAGE URLS" required disabled={uploading} rows={4} className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl text-sm tracking-widest uppercase outline-none focus:border-[#D4AF37] transition-all text-white font-light resize-none custom-scrollbar placeholder:text-gray-600" />
+                    ) : (
+                      <input name="url" type="url" placeholder={type === 'youtube' ? "YOUTUBE URL (e.g. https://youtu.be/...)" : "DIRECT URL LINK"} required disabled={uploading} className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl text-sm tracking-widest uppercase outline-none focus:border-[#D4AF37] transition-all text-white placeholder:text-gray-600" />
+                    )}
+                  </div>
+                )}
+                
+                {/* Optional Custom Thumbnail for Visual Assets */}
+                {['video', 'youtube', 'image', 'link', 'pdf'].includes(type) && (
+                   <div className="pt-6 mt-6 border-t border-white/5">
+                      <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-3 flex items-center gap-2"><ImagePlus size={16}/> Display Thumbnail (Optional)</label>
+                      <input type="file" accept="image/*" disabled={uploading} onChange={(e) => setThumbnailFile(e.target.files[0])} className="w-full text-gray-400 text-sm" />
+                   </div>
+                )}
+                
+                {/* Optional Description */}
+                <div className="pt-6 mt-6 border-t border-white/5">
+                   <textarea name="desc" placeholder="ADDITIONAL NOTES OR DESCRIPTION..." disabled={uploading} rows={3} className="w-full bg-black/50 border border-white/10 p-4 rounded-xl text-sm tracking-widest uppercase outline-none focus:border-[#D4AF37] transition-all text-white font-light resize-none custom-scrollbar placeholder:text-gray-600" />
+                </div>
+                
+                {/* Premium Gate Toggle */}
+                {collectionName === 'library' && (
+                   <div className="pt-6 mt-6 border-t border-white/5">
+                      <label className="flex items-center gap-3 cursor-pointer group">
+                         <div className="relative">
+                            <input type="checkbox" name="isPremium" className="sr-only peer" disabled={uploading} />
+                            <div className="w-10 h-6 bg-gray-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#D4AF37]"></div>
+                         </div>
+                         <span className="text-sm text-[#D4AF37] font-bold tracking-widest uppercase flex items-center gap-2 group-hover:text-white transition-colors">
+                           <Crown size={18} /> Premium Content Gate
+                         </span>
+                      </label>
+                      <p className="text-[10px] text-gray-500 mt-2 font-bold tracking-widest uppercase ml-12">Locks asset to Enrolled Students & Teachers.</p>
+                   </div>
+                )}
+              </div>
+              
+              {uploading && (
+                <div className="w-full bg-black/50 border border-[#D4AF37]/30 rounded-2xl p-6 flex flex-col items-center justify-center animate-in fade-in shadow-[0_0_20px_rgba(212,175,55,0.15)]">
+                  <div className="w-full bg-black rounded-full h-2 mb-3 overflow-hidden border border-white/5">
+                    <div className="bg-gradient-to-r from-[#D4AF37] to-[#FFDF73] h-2 rounded-full transition-all duration-300 shadow-[0_0_10px_#D4AF37]" style={{ width: `${progress}%` }}></div>
+                  </div>
+                  <p className="text-center text-[10px] text-[#D4AF37] font-bold uppercase tracking-widest">Uploading {progress}%</p>
+                </div>
+              )}
+              
+              <div className="flex gap-4 pt-4">
+                <button type="button" onClick={onClose} disabled={uploading} className="flex-1 py-4 md:py-5 border border-white/10 rounded-2xl text-[11px] font-bold tracking-widest uppercase text-gray-400 hover:text-white transition-colors disabled:opacity-50">Cancel</button>
+                <button type="submit" disabled={uploading} className="flex-1 bg-[#D4AF37] text-black rounded-2xl text-[11px] font-bold tracking-widest uppercase hover:bg-[#F9E29D] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-xl">
+                   {uploading ? <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div> : <UploadCloud size={20} />}
+                   {uploading ? 'Processing' : 'Publish Asset'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    // --- Student / Teacher / Admin Specific Course UI ---
+
     function ScheduleCard({ schedule, index, onRemove }) {
        const s = schedule;
        const dateParts = s.date ? s.date.split('-') : ['','',''];
@@ -828,10 +1965,6 @@
        );
     }
 
-
-    // ==========================================
-    // STUDENT VIEW COMPONENTS
-    // ==========================================
     function StudentDashboard({ user, userData, courses }) {
       const [activeCourseId, setActiveCourseId] = useState(null);
       const [previewResource, setPreviewResource] = useState(null);
@@ -950,9 +2083,6 @@
       );
     }
 
-    // ==========================================
-    // TEACHER & ADMIN VIEW DASHBOARDS
-    // ==========================================
     function TeacherDashboard({ user, userData, courses, users, showConfirm }) {
       const [activeCourseId, setActiveCourseId] = useState(null);
       
@@ -1005,99 +2135,6 @@
             {taughtCourses.length === 0 && (
               <p className="text-gray-500 text-sm font-bold tracking-[0.2em] uppercase col-span-full">No courses assigned to your profile.</p>
             )}
-          </div>
-        </div>
-      );
-    }
-
-    function AdminUsers({ users, courses, showConfirm }) {
-      const toggleRole = async (userId, userRoles, targetRole) => {
-        try {
-          const targetUser = users.find(u => u.id === userId);
-          if (targetRole === 'admin' && targetUser?.email !== 'chandrashekharkolhe7@gmail.com') {
-             toast("Admin role restricted to chandrashekharkolhe7@gmail.com");
-             return;
-          }
-
-          let newRoles = [...(userRoles || [])];
-          if (newRoles.includes(targetRole)) newRoles = newRoles.filter(r => r !== targetRole);
-          else newRoles.push(targetRole);
-          if (newRoles.length === 0) newRoles = ['student']; 
-
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', userId), { roles: newRoles });
-          await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'profile', 'info'), { roles: newRoles });
-          toast("Role Updated");
-        } catch(err) { toast("Error updating role"); }
-      };
-
-      const handleEnrollment = async (userId, userCourses, courseId) => {
-        try {
-          let updatedCourses = [...(userCourses || [])];
-          if (updatedCourses.includes(courseId)) updatedCourses = updatedCourses.filter(id => id !== courseId);
-          else updatedCourses.push(courseId);
-
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', userId), { enrolledCourses: updatedCourses });
-          await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'profile', 'info'), { enrolledCourses: updatedCourses });
-          toast("Enrollment Updated");
-        } catch(err) { toast("Error updating enrollment"); }
-      };
-
-      const removeUser = async (userId) => {
-        showConfirm("Delete Profile", "Permanently delete this user profile? This action cannot be undone.", async () => {
-          try {
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', userId));
-            toast("User Profile Deleted");
-          } catch(err) { toast("Error deleting user"); }
-        });
-      };
-
-      return (
-        <div className="animate-in fade-in duration-500">
-          <header className="mb-8 md:mb-14">
-            <h1 className="serif text-4xl md:text-5xl lg:text-6xl mb-3 text-white">User <span className="gold-gradient-text italic">Directory</span></h1>
-            <p className="text-gray-300 text-sm font-light">Manage accounts, roles, and course placements.</p>
-          </header>
-          <div className="space-y-5 pb-12">
-            {users.map(u => (
-              <div key={u.id} className="relative z-0 hover:z-50 focus-within:z-50 glass-premium p-5 md:p-8 rounded-[1.5rem] flex flex-col xl:flex-row xl:items-center justify-between gap-6 border border-white/5">
-                <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center text-white serif text-2xl md:text-3xl shadow-inner shrink-0 overflow-hidden">
-                    {u.profilePic ? <img src={u.profilePic} className="w-full h-full object-cover" /> : u.name.charAt(0)}
-                  </div>
-                  <div className="overflow-hidden flex-1">
-                    <h4 className="text-base font-medium text-white mb-2 break-words line-clamp-1">{u.name}</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {u.roles?.map(r => <span key={r} className="text-[10px] md:text-[9px] bg-black text-[#D4AF37] border border-[#D4AF37]/30 px-3 py-1 rounded-md font-bold uppercase tracking-[0.2em]">{r}</span>)}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-                  <div className="flex bg-black/50 p-1.5 rounded-xl border border-white/10 flex-1 sm:flex-none">
-                    {['student', 'teacher', 'admin'].map(r => (
-                       <button key={r} onClick={() => toggleRole(u.id, u.roles || [], r)} className={`flex-1 sm:flex-none px-4 py-3 text-xs md:text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all ${u.roles?.includes(r) ? 'bg-[#D4AF37] text-black shadow-md' : 'text-gray-500 hover:text-white'}`}>{r.substring(0,3)}</button>
-                    ))}
-                  </div>
-                  <div className="relative group flex-1 sm:flex-none">
-                    <button className="w-full bg-black/50 border border-white/10 px-6 py-3 rounded-xl text-xs md:text-[10px] font-bold uppercase tracking-widest text-gray-300 hover:text-white hover:border-[#D4AF37]/50 transition-all">Courses</button>
-                    <div className="absolute right-0 top-full mt-2 w-full sm:w-72 glass-premium p-5 rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all z-20 max-h-64 overflow-y-auto shadow-2xl border border-[#D4AF37]/30 custom-scrollbar">
-                       <p className="text-xs md:text-[10px] text-[#D4AF37] uppercase tracking-widest font-bold mb-4 border-b border-white/10 pb-3">Available Courses</p>
-                       {courses.length === 0 ? <p className="text-xs text-gray-400">No courses exist.</p> : courses.map(c => {
-                         const isEnrolled = u.enrolledCourses?.includes(c.id);
-                         return (
-                           <label key={c.id} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer transition-colors mb-1">
-                             <input type="checkbox" checked={isEnrolled} onChange={() => handleEnrollment(u.id, u.enrolledCourses, c.id)} className="accent-[#D4AF37] w-5 h-5 rounded shrink-0" />
-                             <span className="text-sm md:text-sm text-white break-words font-light">{c.title}</span>
-                           </label>
-                         )
-                       })}
-                    </div>
-                  </div>
-                  <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeUser(u.id); }} className="px-5 py-3 bg-black/50 hover:bg-red-500/20 text-gray-500 hover:text-red-400 border border-white/10 rounded-xl transition-all flex items-center justify-center shrink-0">
-                    <Trash2 size={20} />
-                  </button>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       );
@@ -1365,8 +2402,8 @@
 
           </div>
           
-          {showResourceModal && <ResourceCreatorModal courseId={course.id} parentId={currentFolderId} onClose={() => setShowResourceModal(false)} />}
-          {showFolderModal && <CreateFolderModal courseId={course.id} parentId={currentFolderId} courseResources={course.resources} onClose={() => setShowFolderModal(false)} />}
+          {showResourceModal && <ResourceCreatorModal docId={course.id} parentId={currentFolderId} collectionName="courses" onClose={() => setShowResourceModal(false)} />}
+          {showFolderModal && <CreateFolderModal docId={course.id} parentId={currentFolderId} collectionName="courses" onClose={() => setShowFolderModal(false)} />}
           {showScheduleModal && <ScheduleCreatorModal courseId={course.id} onClose={() => setShowScheduleModal(false)} />}
           {showEditCourseModal && <EditCourseModal course={course} onClose={() => setShowEditCourseModal(false)} />}
         </div>
@@ -1586,7 +2623,7 @@
       return (
         <div className="flex flex-col h-full w-full animate-in fade-in bg-app z-[100] absolute inset-0 pb-0 lg:pb-6">
           <div className="p-4 md:p-6 pb-2 md:pb-4 bg-app shrink-0 flex items-center shadow-lg border-b border-white/5 z-20 min-h-[60px]">
-             <SmartBackButton label="Back to Course" />
+             <SmartBackButton label="Back to Content" />
           </div>
 
           <div className="flex flex-col lg:flex-row flex-1 overflow-hidden lg:mx-8 lg:mb-8 lg:glass-premium lg:rounded-[3rem] lg:border border-[#D4AF37]/20 lg:shadow-2xl">
@@ -1620,9 +2657,11 @@
                  <button onClick={() => setActiveTab('overview')} className={`flex-1 py-5 text-xs md:text-[11px] font-bold uppercase tracking-widest transition-all ${activeTab === 'overview' ? 'text-[#D4AF37] border-b-[4px] border-[#D4AF37] bg-white/5' : 'text-gray-500 hover:text-gray-300'}`}>
                    Info
                  </button>
-                 <button onClick={() => setActiveTab('attachments')} className={`flex-1 py-5 text-xs md:text-[11px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'attachments' ? 'text-[#D4AF37] border-b-[4px] border-[#D4AF37] bg-white/5' : 'text-gray-500 hover:text-gray-300'}`}>
-                   Notes ({attachments.length})
-                 </button>
+                 {course?.id && ( // Only show attachments if in a course context, not library general
+                   <button onClick={() => setActiveTab('attachments')} className={`flex-1 py-5 text-xs md:text-[11px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'attachments' ? 'text-[#D4AF37] border-b-[4px] border-[#D4AF37] bg-white/5' : 'text-gray-500 hover:text-gray-300'}`}>
+                     Notes ({attachments.length})
+                   </button>
+                 )}
                </div>
 
                {/* Tab Content */}
@@ -1643,7 +2682,7 @@
                     </div>
                   )}
 
-                  {activeTab === 'attachments' && (
+                  {activeTab === 'attachments' && course?.id && (
                     <div className="animate-in fade-in space-y-4 pb-24">
                        {isTeacher && (
                          <button onClick={() => setShowCreator(true)} className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B38D22] text-black py-4 rounded-xl text-xs md:text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all mb-6">
@@ -1691,7 +2730,7 @@
                </div>
             </div>
 
-            {showCreator && <ResourceCreatorModal courseId={course.id} parentId={resource.id} onClose={() => setShowCreator(false)} defaultType="text" />}
+            {showCreator && <ResourceCreatorModal docId={course.id} parentId={resource.id} collectionName="courses" onClose={() => setShowCreator(false)} defaultType="text" />}
           </div>
         </div>
       );
@@ -2016,291 +3055,6 @@
                  </button>
                </div>
              </form>
-          </div>
-        </div>
-      );
-    }
-
-    // ==========================================
-    // MODALS AND FORMS
-    // ==========================================
-    function CreateFolderModal({ courseId, parentId, onClose, courseResources }) {
-      const handleSubmit = async (e) => {
-        e.preventDefault();
-        const title = e.target.title.value;
-        const newFolder = {
-           id: crypto.randomUUID(),
-           type: 'folder',
-           isFolder: true,
-           title: title,
-           parentId: parentId || null,
-           createdAt: new Date().toISOString()
-        };
-        try {
-           await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'courses', courseId), {
-              resources: arrayUnion(newFolder)
-           });
-           toast("Folder Created");
-           onClose();
-        } catch(err) {
-           toast("Error creating folder");
-        }
-      };
-
-      return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-5 bg-[#050505]/90 backdrop-blur-xl animate-in fade-in">
-          <div className="glass-premium p-8 md:p-12 w-full max-w-lg rounded-[2rem] md:rounded-[3rem] relative border border-[#D4AF37]/30 shadow-2xl">
-            <button onClick={onClose} className="absolute top-6 right-6 md:top-8 md:right-8 text-gray-500 hover:text-white"><X size={28}/></button>
-            <h2 className="serif text-3xl md:text-5xl mb-3 text-white italic">Create Folder</h2>
-            <p className="text-[#D4AF37] text-xs md:text-[10px] uppercase tracking-widest font-bold mb-8">Organize Material</p>
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <input name="title" type="text" placeholder="FOLDER NAME" required className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl text-sm md:text-sm tracking-widest uppercase outline-none focus:border-[#D4AF37] transition-all text-white placeholder:text-gray-600" />
-              </div>
-              <div className="flex gap-4 pt-4">
-                <button type="button" onClick={onClose} className="flex-1 py-4 md:py-5 border border-white/10 rounded-2xl text-xs md:text-[11px] font-bold tracking-widest uppercase text-gray-400 hover:text-white transition-colors">Cancel</button>
-                <button type="submit" className="flex-1 bg-[#D4AF37] text-black rounded-2xl text-xs md:text-[11px] font-bold tracking-widest uppercase hover:bg-[#F9E29D] transition-colors shadow-xl">Create</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      );
-    }
-
-    function ResourceCreatorModal({ courseId, parentId, onClose, defaultType = 'pdf' }) {
-      const [type, setType] = useState(defaultType);
-      const [inputMode, setInputMode] = useState('upload');
-      const [uploading, setUploading] = useState(false);
-      const [progress, setProgress] = useState(0);
-
-      const [singleFile, setSingleFile] = useState(null);
-      const [multiFiles, setMultiFiles] = useState([]);
-      const [thumbnailFile, setThumbnailFile] = useState(null);
-
-      const allowsUpload = ['pdf', 'video', 'image', 'collage'].includes(type);
-
-      useEffect(() => {
-        if (!allowsUpload) setInputMode('url');
-        else setInputMode('upload');
-      }, [type, allowsUpload]);
-
-      const uploadToStorage = (file, pathPrefix) => {
-        return new Promise(async (resolve, reject) => {
-          let fileToUpload = file;
-          
-          if (file.type.startsWith('image/')) {
-            try {
-              fileToUpload = await new Promise((res, rej) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (event) => {
-                  const img = new Image();
-                  img.src = event.target.result;
-                  img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX = 1920;
-                    let { width, height } = img;
-                    if (width > height && width > MAX) { height *= MAX / width; width = MAX; }
-                    else if (height > MAX) { width *= MAX / height; height = MAX; }
-                    canvas.width = width;
-                    canvas.height = height;
-                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                    
-                    canvas.toBlob((blob) => {
-                      if(blob) {
-                         const compressedFile = new File([blob], file.name || "image.jpg", { type: 'image/jpeg' });
-                         res(compressedFile);
-                      } else rej(new Error("Image compression failed"));
-                    }, 'image/jpeg', 0.8);
-                  };
-                  img.onerror = () => rej(new Error("Failed to load image logic"));
-                };
-                reader.onerror = () => rej(new Error("Failed to read original image file"));
-              });
-            } catch (e) {
-              console.warn("Failed to compress image, falling back to original file upload.", e);
-              fileToUpload = file;
-            }
-          }
-
-          try {
-            const uniqueName = `${crypto.randomUUID()}_${fileToUpload.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-            const sRef = storageRef(storage, `artifacts/${appId}/public/data/${pathPrefix}_${uniqueName}`);
-            const uploadTask = uploadBytesResumable(sRef, fileToUpload);
-
-            uploadTask.on('state_changed', 
-              (snapshot) => setProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)), 
-              (error) => {
-                console.error("Storage upload error:", error);
-                reject(new Error("Storage Error. Storage limit may be exceeded."));
-              }, 
-              async () => {
-                const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
-                resolve(downloadUrl);
-              }
-            );
-          } catch (err) {
-            console.error(err);
-            reject(new Error("Upload logic error. Try an external URL mode instead."));
-          }
-        });
-      };
-
-      const handleSubmit = async (e) => {
-        e.preventDefault();
-        setUploading(true);
-        setProgress(0);
-        const form = e.target;
-        
-        try {
-          let finalUrl = "";
-          let finalThumbnailUrl = null;
-          let finalDesc = form.desc ? form.desc.value : "";
-
-          if (inputMode === 'upload' && allowsUpload) {
-            if (type === 'collage') {
-              if (multiFiles.length === 0) throw new Error("No files selected.");
-              const urls = await Promise.all(Array.from(multiFiles).map(f => uploadToStorage(f, 'collages')));
-              finalUrl = urls.join(',');
-            } else {
-              if (!singleFile) throw new Error("No file selected.");
-              finalUrl = await uploadToStorage(singleFile, type);
-              if (type === 'video' && thumbnailFile) {
-                finalThumbnailUrl = await uploadToStorage(thumbnailFile, 'thumbnails');
-              }
-            }
-          } else {
-            finalUrl = form.url.value;
-            if (type === 'youtube') {
-               if (thumbnailFile) {
-                 finalThumbnailUrl = await uploadToStorage(thumbnailFile, 'thumbnails');
-               } else {
-                 const yId = extractYoutubeId(finalUrl);
-                 if (yId) finalThumbnailUrl = `https://img.youtube.com/vi/${yId}/hqdefault.jpg`;
-               }
-            }
-          }
-
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'courses', courseId), {
-            resources: arrayUnion({ 
-              id: crypto.randomUUID(),
-              type, 
-              url: finalUrl, 
-              thumbnailUrl: finalThumbnailUrl,
-              title: form.title.value,
-              description: finalDesc,
-              parentId: parentId || null, 
-              createdAt: new Date().toISOString()
-            })
-          });
-
-          toast("Material Published Successfully");
-          onClose();
-        } catch(err) {
-          toast(err.message || "Error publishing material");
-        } finally {
-          setUploading(false);
-        }
-      };
-
-      const getAcceptType = () => {
-        if (type === 'pdf') return 'application/pdf';
-        if (type === 'video') return 'video/*';
-        if (type === 'image' || type === 'collage') return 'image/*';
-        return '*/*';
-      };
-
-      return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-5 bg-[#050505]/90 backdrop-blur-xl animate-in fade-in">
-          <div className="glass-premium p-6 md:p-12 w-full max-w-3xl relative max-h-[90vh] overflow-y-auto custom-scrollbar rounded-[2rem] md:rounded-[3rem] border border-[#D4AF37]/30 shadow-2xl">
-            {!uploading && <button onClick={onClose} className="absolute top-6 right-6 md:top-8 md:right-8 text-gray-500 hover:text-white"><X size={28}/></button>}
-            <h2 className="serif text-3xl md:text-5xl mb-2 text-white italic">Upload Material</h2>
-            <p className="text-[#D4AF37] text-xs md:text-[10px] uppercase tracking-widest font-bold mb-8">Add to Course Asset Library</p>
-            <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
-              <div>
-                <label className="text-xs md:text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-3 block">Material Type</label>
-                <div className="flex gap-3 overflow-x-auto pb-3 custom-scrollbar">
-                  {['pdf', 'video', 'image', 'collage', 'youtube', 'text', 'link'].map(t => (
-                    <button key={t} type="button" onClick={() => setType(t)} disabled={uploading} className={`px-4 md:px-5 py-2.5 md:py-3 rounded-xl text-xs md:text-[11px] uppercase tracking-widest font-bold whitespace-nowrap transition-all border ${type === t ? 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/50 shadow-[0_0_15px_rgba(212,175,55,0.2)]' : 'bg-black/30 text-gray-500 border-white/5 hover:border-white/20'}`}>
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <input name="title" type="text" placeholder="MATERIAL TITLE" required disabled={uploading} className="w-full bg-black/50 border border-white/10 p-4 md:p-6 rounded-2xl text-sm md:text-sm tracking-widest uppercase outline-none focus:border-[#D4AF37] transition-all text-white placeholder:text-gray-600" />
-              </div>
-              
-              {allowsUpload && (
-                <div className="flex bg-black/40 border border-white/5 rounded-xl p-1.5 w-fit">
-                   <button type="button" disabled={uploading} onClick={() => setInputMode('upload')} className={`px-5 py-2.5 rounded-lg text-xs md:text-[11px] uppercase tracking-widest font-bold transition-all ${inputMode === 'upload' ? 'bg-[#D4AF37] text-black shadow-md' : 'text-gray-500 hover:text-white'}`}>Upload</button>
-                   <button type="button" disabled={uploading} onClick={() => setInputMode('url')} className={`px-5 py-2.5 rounded-lg text-xs md:text-[11px] uppercase tracking-widest font-bold transition-all ${inputMode === 'url' ? 'bg-[#D4AF37] text-black shadow-md' : 'text-gray-500 hover:text-white'}`}>URL</button>
-                </div>
-              )}
-              
-              <div className="glass border border-white/5 rounded-3xl p-5 md:p-8">
-                {type === 'text' && <div className="text-[#D4AF37] text-xs md:text-[10px] uppercase tracking-widest font-bold mb-4 bg-[#D4AF37]/10 p-4 rounded-xl border border-[#D4AF37]/20 flex items-center gap-3"><FileText size={18}/> Create a formatted text note for students to read.</div>}
-                {type === 'link' && <div className="text-[#D4AF37] text-xs md:text-[10px] uppercase tracking-widest font-bold mb-4 bg-[#D4AF37]/10 p-4 rounded-xl border border-[#D4AF37]/20 flex items-center gap-3"><LinkIcon size={18}/> Add an external link that will open securely in a new tab.</div>}
-
-                {inputMode === 'upload' && allowsUpload ? (
-                  <div className="space-y-5">
-                    <div>
-                      <label className="text-xs md:text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-3 block">{type === 'collage' ? 'Select Multiple Files' : 'Select Source File'}</label>
-                      <div className="relative border-2 border-dashed border-[#D4AF37]/30 rounded-[2rem] p-8 md:p-14 text-center hover:border-[#D4AF37]/60 transition-colors bg-black/30 group">
-                        <input type="file" accept={getAcceptType()} multiple={type === 'collage'} required disabled={uploading} onChange={(e) => type === 'collage' ? setMultiFiles(e.target.files) : setSingleFile(e.target.files[0])} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                        <FileIcon size={40} className="mx-auto text-[#D4AF37] group-hover:scale-110 mb-4 transition-transform opacity-70" />
-                        <p className="text-[#D4AF37] text-xs md:text-[11px] font-bold tracking-widest uppercase mb-2">Drag & Drop or Browse</p>
-                        <p className="text-gray-400 text-xs md:text-sm font-light">{type === 'collage' ? (multiFiles.length > 0 ? `${multiFiles.length} files selected` : `Supported: Images (Multiple)`) : (singleFile ? singleFile.name : `Supported: ${type.toUpperCase()}`)}</p>
-                      </div>
-                    </div>
-                    {type === 'video' && (
-                      <div className="pt-5 border-t border-white/5">
-                        <label className="text-xs md:text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-3 flex items-center gap-2"><ImagePlus size={18}/> Video Cover Thumbnail (Optional)</label>
-                        <input type="file" accept="image/*" disabled={uploading} onChange={(e) => setThumbnailFile(e.target.files[0])} className="w-full text-gray-400 text-sm" />
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-5">
-                    {type === 'text' ? (
-                      <textarea name="url" placeholder="Type or paste formatted text notes here..." required disabled={uploading} rows={8} className="w-full bg-black/50 border border-white/10 p-5 md:p-6 rounded-2xl text-sm md:text-sm outline-none focus:border-[#D4AF37] transition-all text-white font-light resize-none custom-scrollbar" />
-                    ) : type === 'collage' ? (
-                      <textarea name="url" placeholder="COMMA SEPARATED IMAGE URLS" required disabled={uploading} rows={4} className="w-full bg-black/50 border border-white/10 p-5 md:p-6 rounded-2xl text-sm md:text-sm tracking-widest uppercase outline-none focus:border-[#D4AF37] transition-all text-white font-light resize-none custom-scrollbar placeholder:text-gray-600" />
-                    ) : type === 'youtube' ? (
-                      <>
-                        <input name="url" type="url" placeholder="YOUTUBE URL (e.g. https://youtu.be/...)" required disabled={uploading} className="w-full bg-black/50 border border-white/10 p-5 md:p-6 rounded-2xl text-sm md:text-sm tracking-widest uppercase outline-none focus:border-[#D4AF37] transition-all text-white placeholder:text-gray-600" />
-                        <div className="pt-5 border-t border-white/5">
-                          <label className="text-xs md:text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-3 flex items-center gap-2"><ImagePlus size={18}/> Custom Thumbnail (Optional)</label>
-                          <input type="file" accept="image/*" disabled={uploading} onChange={(e) => setThumbnailFile(e.target.files[0])} className="w-full text-gray-400 text-sm" />
-                        </div>
-                        <div className="pt-5 border-t border-white/5">
-                          <textarea name="desc" placeholder="ADDITIONAL NOTES OR DESCRIPTION FOR THIS VIDEO..." disabled={uploading} rows={4} className="w-full bg-black/50 border border-white/10 p-5 md:p-6 rounded-2xl text-sm md:text-sm tracking-widest uppercase outline-none focus:border-[#D4AF37] transition-all text-white font-light resize-none custom-scrollbar placeholder:text-gray-600" />
-                        </div>
-                      </>
-                    ) : (
-                      <input name="url" type="url" placeholder="DIRECT URL LINK" required disabled={uploading} className="w-full bg-black/50 border border-white/10 p-5 md:p-6 rounded-2xl text-sm md:text-sm tracking-widest uppercase outline-none focus:border-[#D4AF37] transition-all text-white placeholder:text-gray-600" />
-                    )}
-                  </div>
-                )}
-              </div>
-              
-              {uploading && (
-                <div className="w-full bg-black/50 border border-[#D4AF37]/30 rounded-2xl p-6 flex flex-col items-center justify-center animate-in fade-in shadow-[0_0_20px_rgba(212,175,55,0.15)]">
-                  <div className="w-full bg-black rounded-full h-2 mb-3 overflow-hidden border border-white/5">
-                    <div className="bg-gradient-to-r from-[#D4AF37] to-[#FFDF73] h-2 rounded-full transition-all duration-300 shadow-[0_0_10px_#D4AF37]" style={{ width: `${progress}%` }}></div>
-                  </div>
-                  <p className="text-center text-xs md:text-[10px] text-[#D4AF37] font-bold uppercase tracking-widest">Uploading {progress}%</p>
-                </div>
-              )}
-              
-              <div className="flex gap-4 pt-4">
-                <button type="button" onClick={onClose} disabled={uploading} className="flex-1 py-4 md:py-5 border border-white/10 rounded-2xl text-xs md:text-[11px] font-bold tracking-widest uppercase text-gray-400 hover:text-white transition-colors disabled:opacity-50">Cancel</button>
-                <button type="submit" disabled={uploading} className="flex-1 bg-[#D4AF37] text-black rounded-2xl text-xs md:text-[11px] font-bold tracking-widest uppercase hover:bg-[#F9E29D] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-xl">
-                   {uploading ? <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div> : <UploadCloud size={20} />}
-                   {uploading ? 'Processing' : 'Publish Asset'}
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       );
