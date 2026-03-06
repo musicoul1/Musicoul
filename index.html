@@ -848,6 +848,10 @@
       }
       
       const handleViewResource = (res) => {
+         if (res.type === 'link') {
+            window.open(res.url, '_blank');
+            return;
+         }
          window.history.pushState({ internalNav: true }, "");
          setPreviewResource(res);
       }
@@ -1213,6 +1217,10 @@
       };
 
       const handleViewResource = (res) => {
+         if (res.type === 'link') {
+            window.open(res.url, '_blank');
+            return;
+         }
          window.history.pushState({ internalNav: true }, "");
          setPreviewResource(res);
       };
