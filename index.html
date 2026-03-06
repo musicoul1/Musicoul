@@ -156,7 +156,7 @@
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
     import { 
       getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
-      signOut, setPersistence, browserLocalPersistence, signInWithCustomToken 
+      signOut, setPersistence, browserLocalPersistence, signInWithCustomToken, signInAnonymously
     } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
     import { 
       getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, 
@@ -428,32 +428,35 @@
     }
 
     function App() {
+      const [firebaseUser, setFirebaseUser] = useState(null);
       const [user, setUser] = useState(null);
       const [userData, setUserData] = useState(null);
       const [authLoading, setAuthLoading] = useState(true);
+      const [showAuth, setShowAuth] = useState(false);
       
       const [allUsers, setAllUsers] = useState([]);
       const [allCourses, setAllCourses] = useState([]);
       const [allLibrary, setAllLibrary] = useState([]);
 
+      // Initialize Authentication
       useEffect(() => {
-        try { getAnalytics(app); } catch (e) {}
-
         let unsubscribe = () => {};
 
         const initializeSession = async () => {
           try {
             await setPersistence(auth, browserLocalPersistence);
-          } catch (err) {
-            console.error("Persistence setting failed:", err);
-          }
+          } catch (err) {}
           
-          if (typeof window.__initial_auth_token !== 'undefined' && window.__initial_auth_token) {
-            try { await signInWithCustomToken(auth, window.__initial_auth_token); } catch(e) {}
+          // Fallback to anonymous immediately to satisfy Firestore rules for public fetching
+          if (!auth.currentUser) {
+             try { await signInAnonymously(auth); } catch(e) {}
           }
 
           unsubscribe = onAuthStateChanged(auth, async (u) => {
-            if (u) {
+            setFirebaseUser(u);
+
+            // Only treat non-anonymous users as fully logged into the app
+            if (u && !u.isAnonymous) {
               setUser(u);
               try {
                 const profileSnap = await getDoc(doc(db, 'artifacts', appId, 'users', u.uid, 'profile', 'info'));
@@ -499,17 +502,14 @@
         return () => unsubscribe();
       }, []);
 
+      // Fetch Public Data (Courses & Library) Globally AFTER anonymous auth initializes
       useEffect(() => {
-        if (!user || !userData) return; 
+        if (!firebaseUser) return;
 
-        const qUsers = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
+        try { getAnalytics(app); } catch (e) {}
+
         const qCourses = query(collection(db, 'artifacts', appId, 'public', 'data', 'courses'));
         const qLibrary = query(collection(db, 'artifacts', appId, 'public', 'data', 'library'));
-
-        const unsubUsers = onSnapshot(qUsers, 
-          (snap) => setAllUsers(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
-          (error) => console.error("Users snapshot error:", error)
-        );
 
         const unsubCourses = onSnapshot(qCourses, 
           (snap) => setAllCourses(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
@@ -521,10 +521,27 @@
           (error) => console.error("Library snapshot error:", error)
         );
 
-        return () => { unsubUsers(); unsubCourses(); unsubLibrary(); };
+        return () => { unsubCourses(); unsubLibrary(); };
+      }, [firebaseUser]);
+
+      // Fetch User Directory ONLY when authenticated
+      useEffect(() => {
+        if (!user || !userData) return; 
+
+        const qUsers = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
+        const unsubUsers = onSnapshot(qUsers, 
+          (snap) => setAllUsers(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+          (error) => console.error("Users snapshot error:", error)
+        );
+
+        return () => { unsubUsers(); };
       }, [user, userData]);
 
-      const logout = () => signOut(auth);
+      const logout = async () => {
+         await signOut(auth);
+         await signInAnonymously(auth); // Immediately grab anonymous token to keep permissions alive
+         setShowAuth(false);
+      };
 
       if (authLoading) {
         return (
@@ -538,9 +555,14 @@
       }
 
       return (
-        <div className="flex w-full h-full">
+        <div className="flex w-full h-full relative">
+          <GoogleTranslateWidget />
           {!user || !userData ? (
-            <AuthScreen db={db} allUsers={allUsers} setAuthLoading={setAuthLoading} setUserData={setUserData} />
+             showAuth ? (
+               <AuthScreen db={db} allUsers={allUsers} setAuthLoading={setAuthLoading} setUserData={setUserData} onBack={() => setShowAuth(false)} />
+             ) : (
+               <PublicSite courses={allCourses} onLoginClick={() => setShowAuth(true)} />
+             )
           ) : (
             <MainApplication 
               user={user} 
@@ -557,7 +579,34 @@
       );
     }
 
-    function AuthScreen({ db, allUsers, setAuthLoading, setUserData }) {
+    // ==========================================
+    // PUBLIC SITE 
+    // ==========================================
+    function PublicSite({ courses, onLoginClick }) {
+      return (
+        <div className="w-full min-h-screen bg-[#050505] overflow-y-auto relative">
+          {/* Public Top Header */}
+          <header className="absolute top-0 left-0 w-full p-4 md:p-6 flex justify-between items-center z-50 pointer-events-none">
+             <div className="flex items-center gap-3">
+               <div className="w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">
+                 <img src="Assets/Images/Logo.png" alt="Musicoul" className="w-full h-full object-contain" />
+               </div>
+               <h4 className="serif text-2xl font-bold text-white tracking-wide hidden sm:block">Musicoul</h4>
+             </div>
+             <div className="flex items-center gap-4 pointer-events-auto">
+               <CustomLanguageSelector />
+               <button onClick={onLoginClick} className="bg-gradient-to-r from-[#D4AF37] to-[#B38D22] text-black px-6 md:px-8 py-2.5 md:py-3 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center gap-2">
+                 <UserIcon size={16} /> Sign In
+               </button>
+             </div>
+          </header>
+          
+          <UserHome courses={courses} onGoToLibrary={onLoginClick} isPublic={true} />
+        </div>
+      );
+    }
+
+    function AuthScreen({ db, allUsers, setAuthLoading, setUserData, onBack }) {
       const [isLogin, setIsLogin] = useState(true);
 
       const handleAuth = async (e) => {
@@ -613,7 +662,13 @@
       };
 
       return (
-        <div className="w-full min-h-screen flex items-center justify-center p-4 md:p-8 bg-app">
+        <div className="w-full min-h-screen flex items-center justify-center p-4 md:p-8 bg-app relative">
+          {onBack && (
+            <button onClick={onBack} className="absolute top-6 left-6 md:top-10 md:left-10 text-[#D4AF37] hover:text-white flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-colors z-50 bg-black/40 px-4 py-2 rounded-xl backdrop-blur-md border border-[#D4AF37]/20">
+               <ChevronLeft size={18} /> Back to Home
+            </button>
+          )}
+
           <div className="glass-premium p-8 md:p-14 w-full max-w-lg z-10 relative overflow-hidden shadow-2xl rounded-3xl md:rounded-[2.5rem]">
             <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent opacity-50"></div>
             
@@ -656,10 +711,14 @@
 
     function MainApplication({ user, userData, setUserData, allUsers, allCourses, allLibrary, logout, updateLocalRole }) {
       const role = userData.roles[0] || 'user';
-      const defaultTab = role === 'user' ? 'home' : 'dashboard';
-      const [activeTab, setActiveTab] = useState(defaultTab);
+      const [activeTab, setActiveTab] = useState(role === 'user' ? 'home' : 'dashboard');
       const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
       const [confirmState, setConfirmState] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
+
+      // Automatically route user to their respective default tab when their role updates/initializes
+      useEffect(() => {
+        setActiveTab(role === 'user' ? 'home' : 'dashboard');
+      }, [role, user.uid]);
 
       useEffect(() => {
         const handlePopState = () => {
@@ -682,7 +741,6 @@
 
       return (
         <div className="flex flex-col lg:flex-row w-full h-screen overflow-hidden bg-app">
-          <GoogleTranslateWidget />
 
           {/* MOBILE HEADER */}
           <div className="lg:hidden flex items-center justify-between p-3 md:p-5 border-b border-[#D4AF37]/20 glass-premium z-40 sticky top-0 shadow-lg min-h-[56px]">
@@ -730,21 +788,18 @@
                  </div>
               )}
 
-              {role === 'student' && (
+              {(role === 'student' || role === 'teacher' || role === 'admin') && (
                 <SidebarItem icon={<LayoutDashboard size={20} className="lg:w-[22px] lg:h-[22px]" />} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => handleTabChange('dashboard')} />
               )}
 
               {role === 'teacher' && (
                 <>
-                  <SidebarItem icon={<LayoutDashboard size={20} className="lg:w-[22px] lg:h-[22px]" />} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => handleTabChange('dashboard')} />
                   <SidebarItem icon={<Calendar size={20} className="lg:w-[22px] lg:h-[22px]" />} label="Attendance" active={activeTab === 'attendance'} onClick={() => handleTabChange('attendance')} />
                 </>
               )}
 
               {role === 'admin' && (
                 <>
-                  <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-6 lg:mt-8 mb-3 lg:mb-4 px-3 lg:px-4 border-b border-white/10 pb-2">Admin</div>
-                  <SidebarItem icon={<LayoutDashboard size={20} className="lg:w-[22px] lg:h-[22px]" />} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => handleTabChange('dashboard')} />
                   <SidebarItem icon={<Calendar size={20} className="lg:w-[22px] lg:h-[22px]" />} label="Attendance" active={activeTab === 'attendance'} onClick={() => handleTabChange('attendance')} />
                   <SidebarItem icon={<Users size={20} className="lg:w-[22px] lg:h-[22px]" />} label="Users" active={activeTab === 'manage-users'} onClick={() => handleTabChange('manage-users')} />
                   <SidebarItem icon={<BookOpen size={20} className="lg:w-[22px] lg:h-[22px]" />} label="Courses" active={activeTab === 'manage-courses'} onClick={() => handleTabChange('manage-courses')} />
@@ -789,7 +844,7 @@
           <main className={`flex-1 overflow-y-auto relative w-full h-full pb-8 lg:pb-0 ${activeTab === 'm-library' ? 'bg-[#020813]' : activeTab === 'home' ? 'bg-[#050505]' : 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-black via-[#050505] to-[#050505]'}`}>
             <div className={`w-full min-h-full ${activeTab === 'm-library' || activeTab === 'home' ? 'pb-32' : 'p-5 sm:p-8 md:p-12 pb-32 max-w-7xl mx-auto'}`}>
               
-              {activeTab === 'home' && <UserHome user={user} userData={userData} courses={allCourses} onGoToLibrary={() => handleTabChange('m-library')} />}
+              {activeTab === 'home' && <UserHome courses={allCourses} onGoToLibrary={() => handleTabChange('m-library')} />}
               
               {activeTab === 'm-library' && <MLibrary user={user} userData={userData} allLibrary={allLibrary} showConfirm={showConfirm} />}
 
@@ -824,7 +879,7 @@
     // ==========================================
     // USER HOME (New Feature)
     // ==========================================
-    function UserHome({ user, userData, courses, onGoToLibrary }) {
+    function UserHome({ courses, onGoToLibrary, isPublic = false }) {
       const scrollToCourses = () => {
          document.getElementById('course-catalog')?.scrollIntoView({ behavior: 'smooth' });
       };
@@ -839,7 +894,7 @@
                <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-[#050505]"></div>
              </div>
              
-             <div className="relative z-10 text-center px-6 max-w-4xl mx-auto flex flex-col items-center">
+             <div className="relative z-10 text-center px-6 max-w-4xl mx-auto flex flex-col items-center pt-10">
                 <div className="w-20 h-20 md:w-28 md:h-28 mb-8 relative animate-in zoom-in duration-1000">
                   <div className="absolute inset-0 bg-[#D4AF37] blur-[50px] opacity-20 rounded-full"></div>
                   <img src="Assets/Images/Logo.png" alt="Musicoul Logo" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_20px_rgba(212,175,55,0.4)]" />
